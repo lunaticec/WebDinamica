@@ -10,9 +10,9 @@ const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", 
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Aether — Interfaces que se sienten vivas",
+  title: "Fuoco — Arma tu pizza",
   description:
-    "Landing page futurista e interactiva: fondo reactivo, scroll suave, parallax y microinteracciones avanzadas.",
+    "Pizzería artesanal. Arma tu pizza ingrediente por ingrediente y mira el precio cambiar en tiempo real.",
 };
 
 export const viewport: Viewport = {

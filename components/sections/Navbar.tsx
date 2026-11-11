@@ -1,19 +1,20 @@
 "use client";
 
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
-import { NAV_LINKS } from "@/lib/content";
+import { NAV_LINKS, SHOP } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
+import { usePizza } from "@/components/pizza/PizzaProvider";
 
 export function Navbar() {
   const { scrollY, scrollYProgress } = useScroll();
+  const { cart } = usePizza();
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // Se oculta al bajar y reaparece al subir
   useMotionValueEvent(scrollY, "change", (latest) => {
     const prev = scrollY.getPrevious() ?? 0;
     setHidden(latest > prev && latest > 200 && !open);
@@ -34,16 +35,13 @@ export function Navbar() {
       >
         <a href="#top" aria-label="Inicio" className="flex items-center gap-2.5">
           <Logo />
-          <span className="font-display text-lg font-semibold tracking-tight">Aether</span>
+          <span className="font-display text-lg font-semibold tracking-tight">{SHOP.name}</span>
         </a>
 
         <ul className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((l) => (
             <li key={l.href}>
-              <a
-                href={l.href}
-                className="group relative rounded-full px-4 py-2 text-sm text-white/60 transition-colors hover:text-white"
-              >
+              <a href={l.href} className="group relative rounded-full px-4 py-2 text-sm text-white/60 transition-colors hover:text-white">
                 <span className="absolute inset-0 scale-75 rounded-full bg-white/[0.06] opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
                 <span className="relative">{l.label}</span>
               </a>
@@ -53,10 +51,25 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <a
-            href="#cta"
-            className="hidden rounded-full bg-white px-4 py-2 text-sm font-medium text-ink-950 transition hover:bg-white/85 sm:inline-flex"
+            href="#pedido"
+            aria-label={`Mi pedido (${cart.length})`}
+            className="relative grid h-10 w-10 place-items-center rounded-full bg-white text-ink-950 transition hover:bg-white/85"
           >
-            Empezar
+            <ShoppingBag size={17} />
+            <AnimatePresence>
+              {cart.length > 0 && (
+                <motion.span
+                  key={cart.length}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                  className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-orange-500 font-mono text-[10px] font-bold text-white"
+                >
+                  {cart.length}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </a>
           <button
             type="button"
@@ -77,7 +90,7 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -12, filter: "blur(8px)" }}
             transition={{ duration: 0.3 }}
-            className="glass mx-auto mt-2 max-w-7xl rounded-3xl p-3 md:hidden"
+            className="glass mx-auto mt-2 max-w-7xl rounded-3xl bg-ink-900/90 p-3 md:hidden"
           >
             {NAV_LINKS.map((l) => (
               <a
@@ -93,10 +106,9 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Barra de progreso de scroll */}
       <motion.div
         style={{ scaleX: scrollYProgress }}
-        className="fixed inset-x-0 top-0 h-[2px] origin-left bg-gradient-to-r from-neon-violet via-neon-cyan to-neon-pink"
+        className="fixed inset-x-0 top-0 h-[2px] origin-left bg-gradient-to-r from-orange-500 via-amber-400 to-red-500"
       />
     </motion.header>
   );

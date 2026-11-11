@@ -49,7 +49,7 @@ export function MagneticButton({
   const classes = cn(
     "relative inline-flex select-none items-center justify-center gap-2 overflow-hidden rounded-full px-7 py-4 text-sm font-medium tracking-tight transition-colors duration-300",
     variant === "primary"
-      ? "bg-white text-ink-950 shadow-[0_0_40px_-8px_rgba(139,92,246,0.7)] hover:shadow-[0_0_60px_-6px_rgba(34,211,238,0.8)]"
+      ? "bg-white text-ink-950 shadow-[0_0_40px_-8px_rgba(255,100,30,0.7)] hover:shadow-[0_0_60px_-6px_rgba(255,190,50,0.8)]"
       : "border border-white/15 bg-white/[0.03] text-white backdrop-blur hover:border-white/40 hover:bg-white/[0.07]",
     className
   );
@@ -59,7 +59,7 @@ export function MagneticButton({
       {variant === "primary" && (
         <span
           aria-hidden
-          className="absolute inset-0 -z-0 translate-y-full bg-gradient-to-r from-neon-violet via-neon-cyan to-neon-pink transition-transform duration-500 ease-out group-hover:translate-y-0"
+          className="absolute inset-0 -z-0 translate-y-full bg-gradient-to-r from-orange-500 via-amber-400 to-red-500 transition-transform duration-500 ease-out group-hover:translate-y-0"
         />
       )}
       <motion.span style={{ x: ix, y: iy }} className="relative z-10 inline-flex items-center gap-2 transition-colors duration-300 group-hover:text-white">

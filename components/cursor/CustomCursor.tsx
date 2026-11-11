@@ -95,14 +95,14 @@ export function CustomCursor() {
           backgroundColor: filled
             ? "rgba(255,255,255,0.95)"
             : variant === "link"
-              ? "rgba(139,92,246,0.18)"
+              ? "rgba(255,120,40,0.2)"
               : variant === "text"
                 ? "rgba(255,255,255,0.9)"
                 : "rgba(255,255,255,0)",
-          borderColor: variant === "link" ? "rgba(167,139,250,0.9)" : "rgba(255,255,255,0.45)",
+          borderColor: variant === "link" ? "rgba(255,150,70,0.9)" : "rgba(255,255,255,0.45)",
         }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        className="absolute left-0 top-0 flex items-center justify-center border backdrop-blur-[2px]"
+        className="absolute left-0 top-0 flex items-center justify-center border"
       >
         <AnimatePresence mode="wait">
           {filled && (

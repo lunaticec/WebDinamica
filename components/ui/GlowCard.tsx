@@ -23,7 +23,7 @@ type GlowCardProps = {
 export function GlowCard({
   children,
   className,
-  glow = "139,92,246",
+  glow = "255,120,40",
   tilt = 8,
   cursor,
   cursorLabel,

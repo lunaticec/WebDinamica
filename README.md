@@ -1,55 +1,39 @@
-# Aether — Landing page dinámica
+# Fuoco — Pizzería con constructor de pizzas interactivo
 
-Landing page futurista, oscura e interactiva construida con **Next.js 15 (App Router)**, **React 19**, **Tailwind CSS**, **Framer Motion**, **Lenis** (smooth scroll) y **Lucide React**.
+Web de una pizzería donde el cliente **arma su pizza como un juego**: elige tamaño y masa, arrastra (o toca) ingredientes sobre la pizza y ve cómo el **precio cambia en tiempo real**. Al final envía el pedido por WhatsApp.
 
-## Puesta en marcha
+Stack: Next.js 15 (App Router) · React 19 · Tailwind CSS · Framer Motion · Lenis (smooth scroll) · Lucide React.
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm run build && npm start
+npm run dev     # http://localhost:3000
 ```
 
-## Características
+## Personalizar tu negocio
 
-| Requisito | Implementación |
+| Qué | Dónde |
 | --- | --- |
-| Fondo interactivo | `components/background/` — gradientes *mesh* que siguen al ratón con resortes + campo de partículas en canvas 2D con repulsión y conexiones que se iluminan cerca del cursor. |
-| Smooth scroll | `components/providers/SmoothScroll.tsx` — Lenis global + desplazamiento suave para enlaces `#ancla`. |
-| Parallax | `components/ui/Parallax.tsx`, salida del Hero, marquee con desplazamiento horizontal ligado al scroll, galería de proyectos con scroll horizontal fijado (`Showcase`). |
-| Reveal animations | `components/ui/Reveal.tsx` (`Reveal`, `RevealGroup`, `RevealItem`) y `SplitText` (palabras con máscara). |
-| Glassmorphism / glow | `components/ui/GlowCard.tsx` — foco de luz radial que sigue al puntero en relleno y borde + inclinación 3D. |
-| Cursor personalizado | `components/cursor/CustomCursor.tsx` — estados `default`, `link`, `view`, `text`, `drag`, `hide`. Sólo se activa en dispositivos con puntero fino. |
-| Microinteracciones | `MagneticButton`, contadores animados (`Counter`), navbar que se oculta al bajar, barra de progreso de scroll, formulario con feedback animado. |
+| Nombre, WhatsApp, moneda, horario, dirección | `lib/config.ts` |
+| Ingredientes, precios, tamaños, masas y pizzas del menú | `lib/pizza.ts` |
 
-### Cursor: cómo usarlo en cualquier elemento
+El número de WhatsApp debe ir con código de país y sin `+` (ej. `5215512345678`). La moneda se cambia con `currency` (`USD`, `MXN`, `COP`, `EUR`…).
 
-```tsx
-<div data-cursor="view" data-cursor-label="Abrir">…</div>
-```
+## Cómo funciona
 
-Los `<a>` y `<button>` usan el estado `link` automáticamente; `<input>`/`<textarea>`, el estado `text`.
+- **Precio** = base del tamaño + extra de masa + Σ(precio ingrediente × cantidad) × multiplicador del tamaño (`calcPrice` en `lib/pizza.ts`).
+- Cada porción de ingrediente genera piezas en posiciones aleatorias que caen sobre la pizza con física de resorte; quitar una porción las retira con animación.
+- Máximo 3 porciones por ingrediente. Arrastrar funciona con ratón; en táctil se usan toque y botones +/−.
+- El menú permite cargar una pizza prearmada en el constructor y personalizarla.
+- El pedido (carrito) se envía como mensaje de WhatsApp prellenado.
 
 ## Estructura
 
 ```
-app/
-  layout.tsx        # fuentes, providers, fondo y cursor globales
-  page.tsx          # composición de secciones
-  globals.css
-components/
-  background/       # InteractiveBackground, ParticleField
-  cursor/           # CustomCursor
-  providers/        # SmoothScroll (Lenis)
-  sections/         # Navbar, Hero, HeroOrb, Marquee, Features, Showcase, ProjectCard, Process, Stats, CTA, Footer
-  ui/               # GlowCard, MagneticButton, Reveal, SplitText, Parallax, Counter, SectionHeading, Logo
-lib/
-  content.ts        # textos y datos (editar aquí el contenido)
-  utils.ts          # cn(), lerp()
+app/                   layout, página y estilos
+components/pizza/      PizzaProvider (estado), PizzaCanvas, IngredientTray, PriceBar, OptionPicker, Topping…
+components/sections/   Navbar, Hero, Menu, Cart, Footer
+components/ui/         GlowCard, MagneticButton, Reveal, SplitText, SectionHeading, Logo
+components/background/ fondo con gradientes y partículas que reaccionan al ratón
+components/cursor/     cursor personalizado
+lib/                   config.ts, pizza.ts, utils.ts
 ```
-
-## Accesibilidad y rendimiento
-
-- Respeta `prefers-reduced-motion` (desactiva Lenis, congela partículas y acorta animaciones CSS).
-- El canvas limita el DPR a 2, ajusta el nº de partículas al tamaño de pantalla y se pausa con la pestaña oculta.
-- El cursor nativo sólo se oculta en dispositivos con ratón; en táctil no se monta el cursor personalizado.

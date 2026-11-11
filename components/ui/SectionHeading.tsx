@@ -15,7 +15,7 @@ export function SectionHeading({ eyebrow, title, description, align = "left", cl
     <div className={cn("max-w-3xl", align === "center" && "mx-auto text-center", className)}>
       <Reveal y={16}>
         <span className="eyebrow">
-          <span className="h-1.5 w-1.5 rounded-full bg-neon-cyan shadow-[0_0_10px_2px_rgba(34,211,238,0.7)]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-[0_0_10px_2px_rgba(255,140,40,0.7)]" />
           {eyebrow}
         </span>
       </Reveal>

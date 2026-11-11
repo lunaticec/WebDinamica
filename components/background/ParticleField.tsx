@@ -53,7 +53,7 @@ export function ParticleField() {
         vx: (Math.random() - 0.5) * 0.25,
         vy: (Math.random() - 0.5) * 0.25,
         r: Math.random() * 1.4 + 0.4,
-        hue: Math.random() < 0.5 ? 262 : 190,
+        hue: Math.random() < 0.5 ? 22 : 42,
       }));
     };
 
@@ -99,7 +99,7 @@ export function ParticleField() {
           const mid = Math.hypot((a.x + b.x) / 2 - mouse.x, (a.y + b.y) / 2 - mouse.y);
           const glow = mouse.active ? Math.max(0, 1 - mid / (MOUSE_RADIUS * 1.4)) : 0;
           const alpha = (1 - d / LINK_DIST) * (0.08 + glow * 0.45);
-          ctx.strokeStyle = `hsla(${glow > 0.1 ? 210 : 250}, 90%, 75%, ${alpha})`;
+          ctx.strokeStyle = `hsla(${glow > 0.1 ? 38 : 20}, 90%, 75%, ${alpha})`;
           ctx.lineWidth = 0.6 + glow * 0.6;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);

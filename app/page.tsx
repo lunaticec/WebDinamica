@@ -1,29 +1,22 @@
+import { PizzaProvider } from "@/components/pizza/PizzaProvider";
+import { PizzaBuilder } from "@/components/pizza/PizzaBuilder";
 import { Navbar } from "@/components/sections/Navbar";
 import { Hero } from "@/components/sections/Hero";
-import { Marquee } from "@/components/sections/Marquee";
-import { Features } from "@/components/sections/Features";
-import { Showcase } from "@/components/sections/Showcase";
-import { Process } from "@/components/sections/Process";
-import { Stats } from "@/components/sections/Stats";
-import { CTA } from "@/components/sections/CTA";
+import { Menu } from "@/components/sections/Menu";
+import { Cart } from "@/components/sections/Cart";
 import { Footer } from "@/components/sections/Footer";
 
 export default function Home() {
   return (
-    <>
+    <PizzaProvider>
       <Navbar />
       <main>
         <Hero />
-        <div className="overflow-hidden py-10">
-          <Marquee />
-        </div>
-        <Features />
-        <Showcase />
-        <Process />
-        <Stats />
-        <CTA />
+        <PizzaBuilder />
+        <Menu />
+        <Cart />
       </main>
       <Footer />
-    </>
+    </PizzaProvider>
   );
 }

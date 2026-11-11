@@ -36,15 +36,15 @@ export function InteractiveBackground() {
       {/* Mesh gradient */}
       <motion.div
         style={{ x: ax, y: ay }}
-        className="absolute left-[10%] top-[-10%] h-[60vmax] w-[60vmax] rounded-full bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.35),transparent_60%)] blur-3xl"
+        className="absolute left-[10%] top-[-10%] h-[60vmax] w-[60vmax] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,90,30,0.32),transparent_60%)] blur-3xl"
       />
       <motion.div
         style={{ x: bx, y: by }}
-        className="absolute right-[-15%] top-[20%] h-[55vmax] w-[55vmax] rounded-full bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.22),transparent_60%)] blur-3xl"
+        className="absolute right-[-15%] top-[20%] h-[55vmax] w-[55vmax] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,190,50,0.16),transparent_60%)] blur-3xl"
       />
       <motion.div
         style={{ x: cx, y: cy }}
-        className="absolute bottom-[-25%] left-[25%] h-[50vmax] w-[50vmax] rounded-full bg-[radial-gradient(circle_at_center,rgba(244,114,182,0.16),transparent_60%)] blur-3xl"
+        className="absolute bottom-[-25%] left-[25%] h-[50vmax] w-[50vmax] rounded-full bg-[radial-gradient(circle_at_center,rgba(220,40,40,0.18),transparent_60%)] blur-3xl"
       />
 
       <ParticleField />

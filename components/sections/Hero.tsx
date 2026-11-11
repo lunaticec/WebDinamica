@@ -1,54 +1,81 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowDown, ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Flame } from "lucide-react";
 import { useRef } from "react";
+import { INGREDIENTS } from "@/lib/pizza";
+import { SHOP } from "@/lib/config";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { SplitText } from "@/components/ui/SplitText";
-import { HeroOrb } from "./HeroOrb";
+import { Topping } from "@/components/pizza/Topping";
+
+// Ingredientes flotantes decorativos: posición (%), tamaño (px), rotación y velocidad
+const FLOATERS = [
+  { id: "pepperoni", x: 8, y: 22, s: 84, r: 20, d: 6 },
+  { id: "albahaca", x: 84, y: 18, s: 70, r: -25, d: 7 },
+  { id: "tomate", x: 90, y: 62, s: 92, r: 10, d: 8 },
+  { id: "champinon", x: 5, y: 70, s: 76, r: -15, d: 7.5 },
+  { id: "aceituna", x: 70, y: 82, s: 52, r: 0, d: 5.5 },
+  { id: "pimiento", x: 22, y: 86, s: 68, r: 35, d: 6.5 },
+  { id: "pina", x: 76, y: 38, s: 60, r: -10, d: 9 },
+] as const;
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-
-  // Parallax de salida: el texto sube y se desvanece; el orbe baja y escala
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "-35%"]);
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "-30%"]);
   const textOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const orbY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
-  const orbScale = useTransform(scrollYProgress, [0, 1], [1, 1.35]);
+  const farY = useTransform(scrollYProgress, [0, 1], ["0%", "60%"]);
+  const nearY = useTransform(scrollYProgress, [0, 1], ["0%", "130%"]);
 
   return (
-    <section ref={ref} id="top" className="relative flex min-h-[100svh] items-center overflow-hidden pt-28">
-      <motion.div style={{ y: orbY, scale: orbScale }} className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <HeroOrb />
-      </motion.div>
+    <section ref={ref} id="top" className="relative flex min-h-[100svh] items-center overflow-hidden pt-24">
+      {/* Ingredientes flotando con parallax a dos velocidades */}
+      {FLOATERS.map((f, i) => (
+        <motion.div
+          key={f.id}
+          style={{ left: `${f.x}%`, top: `${f.y}%`, y: i % 2 ? farY : nearY }}
+          className="pointer-events-none absolute hidden opacity-60 sm:block"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.3, rotate: f.r - 90 }}
+            animate={{ opacity: 1, scale: 1, rotate: [f.r, f.r + 12, f.r], y: [0, -16, 0] }}
+            transition={{
+              opacity: { delay: 0.6 + i * 0.1 },
+              scale: { delay: 0.6 + i * 0.1, type: "spring" },
+              rotate: { duration: f.d, repeat: Infinity, ease: "easeInOut" },
+              y: { duration: f.d, repeat: Infinity, ease: "easeInOut" },
+            }}
+            style={{ width: f.s, height: f.s }}
+            className="blur-[0.5px] drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
+          >
+            <Topping id={f.id as (typeof INGREDIENTS)[number]["id"]} className="h-full w-full" />
+          </motion.div>
+        </motion.div>
+      ))}
 
-      <motion.div style={{ y: textY, opacity: textOpacity }} className="section relative">
+      <motion.div style={{ y: textY, opacity: textOpacity }} className="section relative text-center">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
           className="eyebrow"
         >
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-neon-lime opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-neon-lime" />
-          </span>
-          Estudio digital · Disponible 2027
+          <Flame size={13} className="text-orange-400" />
+          {SHOP.name} · {SHOP.tagline}
         </motion.div>
 
-        <h1 className="mt-8 font-display text-display-xl font-semibold text-white" data-cursor="text">
-          <SplitText text="Interfaces que" delay={0.2} />
+        <h1 className="mx-auto mt-8 max-w-5xl font-display text-display-xl font-semibold text-white" data-cursor="text">
+          <SplitText text="Tu pizza." delay={0.2} />
           <br />
-          <SplitText text="se sienten" delay={0.35} />{" "}
           <span className="inline-block overflow-hidden pb-[0.08em] align-bottom">
             <motion.span
               initial={{ y: "110%" }}
               animate={{ y: "0%" }}
-              transition={{ duration: 1.1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 1.1, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
               className="text-gradient inline-block italic"
             >
-              vivas.
+              Tus reglas.
             </motion.span>
           </span>
         </h1>
@@ -57,44 +84,26 @@ export function Hero() {
           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-8 max-w-xl text-lg leading-relaxed text-white/55 sm:text-xl"
+          className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/60 sm:text-xl"
         >
-          Diseñamos y construimos experiencias web inmersivas, rápidas y memorables para marcas que quieren
-          ir un paso por delante.
+          Elige el tamaño, la masa y suma ingredientes como en un juego. Mira tu pizza armarse y el precio cambiar en
+          tiempo real.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-10 flex flex-wrap items-center gap-4"
+          className="mt-10 flex flex-wrap items-center justify-center gap-4"
         >
-          <MagneticButton href="#cta">
-            Iniciar proyecto <ArrowRight size={16} />
+          <MagneticButton href="#arma">
+            Armar mi pizza <ArrowRight size={16} />
           </MagneticButton>
-          <MagneticButton href="#showcase" variant="ghost">
-            <Play size={14} className="fill-current" /> Ver showreel
+          <MagneticButton href="#menu" variant="ghost">
+            Ver el menú
           </MagneticButton>
         </motion.div>
       </motion.div>
-
-      <motion.a
-        href="#features"
-        aria-label="Bajar"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6 }}
-        className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 font-mono text-[10px] uppercase tracking-[0.3em] text-white/40 sm:flex"
-      >
-        Scroll
-        <motion.span
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          className="grid h-10 w-6 place-items-center rounded-full border border-white/20"
-        >
-          <ArrowDown size={12} />
-        </motion.span>
-      </motion.a>
     </section>
   );
 }
