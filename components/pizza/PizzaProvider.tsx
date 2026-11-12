@@ -10,6 +10,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { SHOP } from "@/lib/config";
 import {
   MAX_PER_INGREDIENT,
   PRESETS,
@@ -18,6 +19,7 @@ import {
   type CartItem,
   type Counts,
   type CrustId,
+  type Delivery,
   type IngredientId,
   type Layer,
   type SizeId,
@@ -32,10 +34,18 @@ type PizzaCtx = {
   presetName: string | null;
   cart: CartItem[];
   cartTotal: number;
+  delivery: Delivery;
+  deliveryFee: number;
+  /** Pizza que se está armando ahora, como línea de ticket */
+  current: CartItem;
+  /** Pizzas del carrito + la actual (si tiene algo o el carrito está vacío) */
+  orderItems: CartItem[];
+  orderTotal: number;
   /** El usuario está arrastrando un ingrediente sobre la pizza */
   over: boolean;
   pizzaRef: RefObject<HTMLDivElement | null>;
   setOver: (v: boolean) => void;
+  setDelivery: (d: Delivery) => void;
   setSize: (s: SizeId) => void;
   setCrust: (c: CrustId) => void;
   addIngredient: (id: IngredientId) => void;
@@ -62,6 +72,7 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
   const [presetName, setPresetName] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [over, setOver] = useState(false);
+  const [delivery, setDelivery] = useState<Delivery>("recoger");
   const pizzaRef = useRef<HTMLDivElement>(null);
 
   const counts = useMemo(() => {
@@ -72,6 +83,17 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
 
   const price = useMemo(() => calcPrice(counts, size, crust), [counts, size, crust]);
   const cartTotal = useMemo(() => cart.reduce((s, i) => s + i.price, 0), [cart]);
+
+  const current = useMemo<CartItem>(
+    () => ({ uid: "current", name: presetName ?? "Pizza personalizada", size, crust, ingredients: counts, price }),
+    [presetName, size, crust, counts, price]
+  );
+  const orderItems = useMemo(
+    () => (layers.length > 0 || cart.length === 0 ? [...cart, current] : cart),
+    [layers.length, cart, current]
+  );
+  const deliveryFee = delivery === "domicilio" ? SHOP.deliveryFee : 0;
+  const orderTotal = useMemo(() => orderItems.reduce((s, i) => s + i.price, 0) + deliveryFee, [orderItems, deliveryFee]);
 
   const addIngredient = useCallback((id: IngredientId) => {
     setLayers((prev) =>
@@ -132,6 +154,12 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
     presetName,
     cart,
     cartTotal,
+    delivery,
+    deliveryFee,
+    current,
+    orderItems,
+    orderTotal,
+    setDelivery,
     over,
     pizzaRef,
     setOver,

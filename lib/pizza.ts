@@ -51,7 +51,7 @@ export const SIZES: { id: SizeId; label: string; inches: number; base: number; m
 
 export type CrustId = "clasica" | "delgada" | "queso";
 export const CRUSTS: { id: CrustId; label: string; desc: string; extra: number; width: number }[] = [
-  { id: "clasica", label: "Clásica", desc: "Esponjosa", extra: 0, width: 8 },
+  { id: "clasica", label: "Clásica", desc: "Suave", extra: 0, width: 8 },
   { id: "delgada", label: "Delgada", desc: "Crujiente", extra: 0, width: 4.5 },
   { id: "queso", label: "Borde de queso", desc: "Rellena", extra: 2.5, width: 9.5 },
 ];
@@ -147,11 +147,19 @@ export function describeItem(item: CartItem) {
   return { size: size.label, crust: crust.label, tops: tops || "Solo queso" };
 }
 
-export function buildWhatsAppUrl(items: CartItem[], total: number, fmt: (n: number) => string) {
+export type Delivery = "recoger" | "domicilio";
+
+export function buildWhatsAppUrl(
+  items: CartItem[],
+  total: number,
+  fmt: (n: number) => string,
+  delivery: Delivery = "recoger"
+) {
   const lines = items.map((it, i) => {
     const d = describeItem(it);
     return `${i + 1}. ${it.name} (${d.size}, masa ${d.crust.toLowerCase()})\n   ${d.tops} — ${fmt(it.price)}`;
   });
-  const text = `Hola ${SHOP.name}, quiero hacer este pedido:\n\n${lines.join("\n")}\n\nTotal: ${fmt(total)}`;
+  const entrega = delivery === "domicilio" ? `A domicilio (+${fmt(SHOP.deliveryFee)})` : "Recoger en tienda";
+  const text = `Hola ${SHOP.name}, quiero hacer este pedido:\n\n${lines.join("\n")}\n\nEntrega: ${entrega}\nTotal: ${fmt(total)}`;
   return `https://wa.me/${SHOP.whatsapp}?text=${encodeURIComponent(text)}`;
 }

@@ -9,10 +9,12 @@ export const SHOP = {
   hours: "Todos los días · 12:00 – 23:00",
   address: "Calle Principal 123, Tu Ciudad",
   phone: "+52 55 5555 5555",
+  /** Costo de envío a domicilio */
+  deliveryFee: 2.5,
 };
 
 export const NAV_LINKS = [
   { label: "Arma tu pizza", href: "#arma" },
   { label: "Menú", href: "#menu" },
-  { label: "Mi pedido", href: "#pedido" },
+  { label: "Mi ticket", href: "#ticket" },
 ] as const;

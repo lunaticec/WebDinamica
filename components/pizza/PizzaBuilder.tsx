@@ -1,77 +1,91 @@
 "use client";
 
 import { AnimatePresence, motion, useInView } from "framer-motion";
+import { Flame } from "lucide-react";
 import { useRef } from "react";
 import { CRUSTS, SIZES } from "@/lib/pizza";
+import { SHOP } from "@/lib/config";
 import { formatPrice } from "@/lib/utils";
-import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { IngredientTray } from "./IngredientTray";
 import { OptionPicker } from "./OptionPicker";
 import { PizzaCanvas } from "./PizzaCanvas";
 import { PriceBar } from "./PriceBar";
+import { Ticket } from "./Ticket";
 import { usePizza } from "./PizzaProvider";
 
-function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
-  return (
-    <Reveal y={24}>
-      <div className="mb-3 flex items-center gap-3">
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-orange-500 font-mono text-xs font-bold text-white">{n}</span>
-        <h3 className="font-display text-xl font-semibold text-white">{title}</h3>
-      </div>
-      {children}
-    </Reveal>
-  );
+function Label({ children }: { children: React.ReactNode }) {
+  return <p className="mb-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-stone-500">{children}</p>;
 }
 
 export function PizzaBuilder() {
   const { size, setSize, crust, setCrust } = usePizza();
   const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { amount: 0.15 });
+  const inView = useInView(ref, { amount: 0.1 });
 
   return (
     <section ref={ref} id="arma" className="section py-24 sm:py-32">
       <SectionHeading
         eyebrow="Constructor"
         title="Arma tu pizza a tu gusto."
-        description="Elige tamaño y masa, luego arrastra los ingredientes sobre la pizza (o tócalos). El precio cambia en cada paso."
+        description="Elige tamaño y masa, arrastra los ingredientes a la pizza y mira tu ticket crecer."
       />
 
-      <div className="mt-14 grid items-start gap-12 lg:grid-cols-[1fr_1fr]">
-        {/* Pizza + total (fija en escritorio) */}
-        <div className="relative z-10 lg:sticky lg:top-28">
-          <PizzaCanvas />
-          <div className="mt-8 hidden lg:block">
-            <PriceBar />
+      {/* Mesa de trabajo */}
+      <div className="flour relative isolate mt-12 overflow-hidden rounded-[2rem] p-4 text-stone-900 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)] sm:p-6 lg:p-8">
+        <header className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-red-700">
+            <Flame size={22} />
+            <span className="font-display text-2xl font-extrabold uppercase tracking-tight">{SHOP.name}</span>
           </div>
-        </div>
+          <p className="hidden font-mono text-[11px] uppercase tracking-[0.25em] text-stone-500 sm:block">
+            Hecha a mano · Horneada al momento
+          </p>
+          <a
+            href="#ticket"
+            className="rounded-full border border-black/15 bg-white/70 px-4 py-2 text-sm font-semibold text-stone-800 backdrop-blur transition hover:bg-white"
+          >
+            Mi ticket ↗
+          </a>
+        </header>
 
-        {/* Pasos */}
-        <div className="relative z-20 space-y-9">
-          <Step n={1} title="Tamaño">
-            <OptionPicker
-              name="size"
-              value={size}
-              onChange={setSize}
-              options={SIZES.map((s) => ({ id: s.id, label: s.label, sub: `${s.inches}″ · ${formatPrice(s.base)}` }))}
-            />
-          </Step>
-          <Step n={2} title="Masa">
-            <OptionPicker
-              name="crust"
-              value={crust}
-              onChange={setCrust}
-              options={CRUSTS.map((c) => ({
-                id: c.id,
-                label: c.label,
-                sub: c.extra ? `+${formatPrice(c.extra)}` : c.desc,
-              }))}
-            />
-          </Step>
-          <Step n={3} title="Ingredientes">
+        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+          {/* Ingredientes */}
+          <div className="relative z-30 order-2 lg:order-1">
+            <h3 className="font-display text-3xl font-extrabold tracking-tight text-stone-900">Hazla tuya.</h3>
+            <p className="mb-5 mt-1 text-sm text-stone-600">Arrastra o toca para agregar.</p>
             <IngredientTray />
-            <p className="mt-3 text-sm text-white/40">Hasta 3 porciones por ingrediente. Incluye salsa de tomate y mozzarella.</p>
-          </Step>
+          </div>
+
+          {/* Pizza + opciones */}
+          <div className="relative z-10 order-1 space-y-7 lg:order-2">
+            <PizzaCanvas />
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <Label>Tamaño</Label>
+                <OptionPicker
+                  name="size"
+                  value={size}
+                  onChange={setSize}
+                  options={SIZES.map((s) => ({ id: s.id, label: s.label, sub: `${s.inches}″` }))}
+                />
+              </div>
+              <div>
+                <Label>Masa</Label>
+                <OptionPicker
+                  name="crust"
+                  value={crust}
+                  onChange={setCrust}
+                  options={CRUSTS.map((c) => ({ id: c.id, label: c.label.replace("Borde de queso", "Queso"), sub: c.extra ? `+${formatPrice(c.extra)}` : c.desc }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Ticket */}
+          <div id="ticket" className="relative z-20 order-3 scroll-mt-24 lg:sticky lg:top-24">
+            <Ticket />
+          </div>
         </div>
       </div>
 
@@ -85,7 +99,7 @@ export function PizzaBuilder() {
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
             className="fixed inset-x-3 bottom-3 z-40 lg:hidden"
           >
-            <PriceBar compact />
+            <PriceBar />
           </motion.div>
         )}
       </AnimatePresence>

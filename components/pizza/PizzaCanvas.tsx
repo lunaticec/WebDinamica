@@ -5,122 +5,128 @@ import { CRUSTS, SIZES } from "@/lib/pizza";
 import { Topping } from "./Topping";
 import { usePizza } from "./PizzaProvider";
 
-/** La pizza: base, salsa, queso y cada ingrediente cayendo con física de resorte. */
+/** La pizza dentro de su caja de cartón, sobre papel de horno. Cada ingrediente cae con física de resorte. */
 export function PizzaCanvas() {
   const { layers, size, crust, over, pizzaRef } = usePizza();
   const scale = SIZES.find((s) => s.id === size)!.scale;
   const crustW = CRUSTS.find((c) => c.id === crust)!.width;
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[540px]">
-      {/* Resplandor que se intensifica al arrastrar encima */}
-      <motion.div
-        aria-hidden
-        animate={{ opacity: over ? 0.9 : 0.35, scale: over ? 1.08 : 1 }}
-        className="absolute inset-[4%] rounded-full bg-[radial-gradient(circle,rgba(255,120,40,0.55),transparent_70%)] blur-2xl"
-      />
+    <div>
+      <div className="relative mx-auto aspect-square w-full max-w-[600px]">
+        {/* Caja de cartón */}
+        <div
+          className="absolute inset-0 rounded-[1.4rem]"
+          style={{
+            background: "linear-gradient(150deg,#dcbb8a,#b98d52)",
+            boxShadow:
+              "0 40px 60px -28px rgba(40,20,0,.75), inset 0 0 0 5px rgba(255,255,255,.14), inset 0 -14px 28px rgba(60,30,0,.25)",
+          }}
+        />
+        <div
+          className="absolute inset-[3.5%] rounded-2xl"
+          style={{ background: "linear-gradient(160deg,#c9a56f,#a77b44)", boxShadow: "inset 0 6px 14px rgba(0,0,0,.3)" }}
+        />
+        {/* Papel de horno */}
+        <div
+          className="absolute inset-[6%] rounded-lg bg-[#f7f3ea]"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,.25), inset 0 0 40px rgba(180,150,100,.2)", transform: "rotate(-0.8deg)" }}
+        />
 
-      <motion.div
-        ref={pizzaRef}
-        animate={{ scale, rotate: over ? 5 : 0 }}
-        transition={{ type: "spring", stiffness: 160, damping: 18 }}
-        className="absolute inset-0"
-      >
-        <motion.div
-          animate={{ y: [0, -7, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-          className="relative h-full w-full"
-        >
-          {/* Sombra */}
-          <div className="absolute inset-[2%] translate-y-5 rounded-full bg-black/70 blur-2xl" />
-
-          {/* Masa */}
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: "radial-gradient(circle at 35% 28%, #f3c987, #d6963f 58%, #b57226)",
-              boxShadow: "inset 0 -8px 20px rgba(0,0,0,.28), inset 0 8px 16px rgba(255,255,255,.28)",
-            }}
-          />
-          {/* Borde relleno de queso */}
-          <div
-            aria-hidden
-            className="absolute inset-[2.2%] rounded-full border-[3px] border-dashed border-[#ffe6a0]/70 transition-opacity duration-500"
-            style={{ opacity: crust === "queso" ? 1 : 0 }}
-          />
-          {/* Salsa */}
-          <div
-            className="absolute rounded-full transition-all duration-500"
-            style={{
-              inset: `${crustW}%`,
-              background: "radial-gradient(circle, #d8452d 0%, #b52c19 100%)",
-              boxShadow: "inset 0 0 18px rgba(80,10,0,.5)",
-            }}
-          />
-          {/* Queso */}
-          <div
-            className="absolute rounded-full transition-all duration-500"
-            style={{
-              inset: `${crustW + 2.4}%`,
-              background:
-                "radial-gradient(circle at 38% 32%, #ffe69a, #f8c94c 62%, #eaa92e), radial-gradient(circle at 70% 70%, rgba(255,255,255,.35), transparent 30%)",
-              boxShadow: "inset 0 0 14px rgba(190,110,0,.45)",
-            }}
-          />
-
-          {/* Zona de soltado */}
+        {/* Pizza */}
+        <div className="absolute inset-[11%]">
           <motion.div
-            aria-hidden
-            animate={{ opacity: over ? 1 : 0 }}
-            className="absolute inset-[6%] rounded-full border-2 border-dashed border-white/80"
-          />
-
-          {/* Ingredientes */}
-          <div className="absolute inset-0">
-            <AnimatePresence>
-              {layers.flatMap((layer) =>
-                layer.pieces.map((p) => (
-                  <div
-                    key={p.id}
-                    className="absolute"
-                    style={{
-                      left: `${p.x}%`,
-                      top: `${p.y}%`,
-                      width: `${p.size}%`,
-                      aspectRatio: "1",
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  >
-                    <motion.div
-                      initial={{ y: -340, opacity: 0, scale: 1.9, rotate: p.rot + 140 }}
-                      animate={{ y: 0, opacity: 1, scale: p.scale, rotate: p.rot }}
-                      exit={{ opacity: 0, scale: 0.2, y: -40 }}
-                      transition={{ type: "spring", stiffness: 240, damping: 17, delay: p.delay }}
-                      className="h-full w-full drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)]"
-                    >
-                      <Topping id={p.ing} className="h-full w-full" />
-                    </motion.div>
-                  </div>
-                ))
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* Pista cuando está vacía */}
-      <AnimatePresence>
-        {layers.length === 0 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="pointer-events-none absolute inset-0 z-10 grid place-items-center px-10 text-center font-display text-xl font-semibold text-black/55"
+            ref={pizzaRef}
+            animate={{ scale, rotate: over ? 4 : 0 }}
+            transition={{ type: "spring", stiffness: 160, damping: 18 }}
+            className="absolute inset-0"
           >
-            Arrastra o toca un ingrediente
-          </motion.p>
-        )}
-      </AnimatePresence>
+            <div className="absolute inset-[2%] translate-y-2 rounded-full bg-black/30 blur-lg" />
+
+            {/* Masa */}
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "radial-gradient(circle at 35% 28%, #f6e4bf, #e3c288 58%, #c9995a)",
+                boxShadow: "inset 0 -6px 14px rgba(120,70,20,.3), inset 0 6px 12px rgba(255,255,255,.35)",
+              }}
+            />
+            <div
+              aria-hidden
+              className="absolute inset-[2.4%] rounded-full border-[3px] border-dashed border-white/70 transition-opacity duration-500"
+              style={{ opacity: crust === "queso" ? 1 : 0 }}
+            />
+            {/* Salsa */}
+            <div
+              className="absolute rounded-full transition-all duration-500"
+              style={{
+                inset: `${crustW}%`,
+                background: "radial-gradient(circle, #d9432a 0%, #b9301b 100%)",
+                boxShadow: "inset 0 0 16px rgba(80,10,0,.45)",
+              }}
+            />
+            {/* Mozzarella base (manchas cremosas) */}
+            <div
+              className="absolute rounded-full transition-all duration-500"
+              style={{
+                inset: `${crustW + 1.5}%`,
+                background: [
+                  "radial-gradient(circle at 22% 30%, #fff6e2 0 9%, transparent 10%)",
+                  "radial-gradient(circle at 60% 18%, #fff6e2 0 8%, transparent 9%)",
+                  "radial-gradient(circle at 80% 46%, #fff6e2 0 10%, transparent 11%)",
+                  "radial-gradient(circle at 38% 62%, #fff6e2 0 11%, transparent 12%)",
+                  "radial-gradient(circle at 66% 78%, #fff6e2 0 9%, transparent 10%)",
+                  "radial-gradient(circle at 18% 78%, #fff6e2 0 7%, transparent 8%)",
+                  "radial-gradient(circle at 50% 44%, #fff6e2 0 8%, transparent 9%)",
+                ].join(","),
+                filter: "drop-shadow(0 1px 1px rgba(80,20,0,.3))",
+              }}
+            />
+
+            {/* Zona de soltado */}
+            <motion.div
+              aria-hidden
+              animate={{ opacity: over ? 1 : 0 }}
+              className="absolute inset-[4%] rounded-full border-2 border-dashed border-red-600/80 bg-red-600/10"
+            />
+
+            {/* Ingredientes */}
+            <div className="absolute inset-0">
+              <AnimatePresence>
+                {layers.flatMap((layer) =>
+                  layer.pieces.map((p) => (
+                    <div
+                      key={p.id}
+                      className="absolute"
+                      style={{
+                        left: `${p.x}%`,
+                        top: `${p.y}%`,
+                        width: `${p.size}%`,
+                        aspectRatio: "1",
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    >
+                      <motion.div
+                        initial={{ y: -340, opacity: 0, scale: 1.9, rotate: p.rot + 140 }}
+                        animate={{ y: 0, opacity: 1, scale: p.scale, rotate: p.rot }}
+                        exit={{ opacity: 0, scale: 0.2, y: -40 }}
+                        transition={{ type: "spring", stiffness: 240, damping: 17, delay: p.delay }}
+                        className="h-full w-full drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)]"
+                      >
+                        <Topping id={p.ing} className="h-full w-full" />
+                      </motion.div>
+                    </div>
+                  ))
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      <p className="mx-auto mt-5 w-fit rounded-full border border-black/10 bg-white/75 px-5 py-2 text-center text-xs text-stone-600 shadow-sm backdrop-blur">
+        Arrastra los ingredientes sobre la pizza · o tócalos
+      </p>
     </div>
   );
 }

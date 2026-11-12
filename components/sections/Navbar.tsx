@@ -51,8 +51,8 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <a
-            href="#pedido"
-            aria-label={`Mi pedido (${cart.length})`}
+            href="#ticket"
+            aria-label={`Mi ticket (${cart.length})`}
             className="relative grid h-10 w-10 place-items-center rounded-full bg-white text-ink-950 transition hover:bg-white/85"
           >
             <ShoppingBag size={17} />
