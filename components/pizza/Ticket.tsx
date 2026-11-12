@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Flame, MessageCircle, Plus, X } from "lucide-react";
+import { CreditCard, Flame, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SHOP } from "@/lib/config";
-import { CRUSTS, INGREDIENTS, SIZES, buildWhatsAppUrl, describeItem } from "@/lib/pizza";
+import { CRUSTS, INGREDIENTS, SIZES, describeItem } from "@/lib/pizza";
+import { CheckoutModal } from "@/components/checkout/CheckoutModal";
 import { cn, formatPrice } from "@/lib/utils";
 import { AnimatedPrice } from "./AnimatedPrice";
 import { usePizza } from "./PizzaProvider";
@@ -41,6 +42,7 @@ export function Ticket() {
   } = usePizza();
 
   const [stamp, setStamp] = useState("");
+  const [checkout, setCheckout] = useState(false);
   useEffect(() => {
     setStamp(new Date().toLocaleString(SHOP.locale, { dateStyle: "medium", timeStyle: "short" }));
   }, []);
@@ -213,15 +215,15 @@ export function Ticket() {
         </div>
 
         {/* Botón */}
-        <a
-          href={buildWhatsAppUrl(orderItems, orderTotal, formatPrice, delivery)}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          type="button"
+          onClick={() => setCheckout(true)}
           data-cursor="link"
-          className="mt-5 flex h-14 items-center justify-center gap-2 rounded-md bg-red-700 text-base font-bold uppercase tracking-wide text-white shadow-[0_8px_0_-4px_#7f1d1d] transition hover:bg-red-600 active:translate-y-0.5"
+          className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-md bg-red-700 text-base font-bold uppercase tracking-wide text-white shadow-[0_8px_0_-4px_#7f1d1d] transition hover:bg-red-600 active:translate-y-0.5"
         >
-          <MessageCircle size={18} /> Pedir por WhatsApp
-        </a>
+          <CreditCard size={18} /> Continuar al pago
+        </button>
+        <CheckoutModal open={checkout} onClose={() => setCheckout(false)} />
 
         {/* Código de barras */}
         <div

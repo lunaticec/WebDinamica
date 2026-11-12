@@ -108,6 +108,18 @@ html.lenis body {
   background-size: 420px 420px, 100% 100%, 100% 100%, 100% 100%;
 }
 
+/* Imprimir / guardar comprobante en PDF: sólo el ticket */
+@media print {
+  .fixed,
+  .noise::before {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+}
+
 /* Borde irregular de ticket */
 .ticket-edge {
   height: 10px;

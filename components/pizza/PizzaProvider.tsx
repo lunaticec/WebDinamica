@@ -55,6 +55,8 @@ type PizzaCtx = {
   addToCart: () => void;
   removeFromCart: (uid: string) => void;
   clearCart: () => void;
+  /** Vacía pizza y pedido (después de confirmar un pedido) */
+  resetAll: () => void;
 };
 
 const Ctx = createContext<PizzaCtx | null>(null);
@@ -144,6 +146,11 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
 
   const removeFromCart = useCallback((uid: string) => setCart((p) => p.filter((i) => i.uid !== uid)), []);
   const clearCart = useCallback(() => setCart([]), []);
+  const resetAll = useCallback(() => {
+    setLayers([]);
+    setCart([]);
+    setPresetName(null);
+  }, []);
 
   const value: PizzaCtx = {
     layers,
@@ -172,6 +179,7 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
     addToCart,
     removeFromCart,
     clearCart,
+    resetAll,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

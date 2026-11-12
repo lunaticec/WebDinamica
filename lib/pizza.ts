@@ -1,4 +1,3 @@
-import { SHOP } from "./config";
 
 export type IngredientId =
   | "pepperoni"
@@ -148,18 +147,3 @@ export function describeItem(item: CartItem) {
 }
 
 export type Delivery = "recoger" | "domicilio";
-
-export function buildWhatsAppUrl(
-  items: CartItem[],
-  total: number,
-  fmt: (n: number) => string,
-  delivery: Delivery = "recoger"
-) {
-  const lines = items.map((it, i) => {
-    const d = describeItem(it);
-    return `${i + 1}. ${it.name} (${d.size}, masa ${d.crust.toLowerCase()})\n   ${d.tops} — ${fmt(it.price)}`;
-  });
-  const entrega = delivery === "domicilio" ? `A domicilio (+${fmt(SHOP.deliveryFee)})` : "Recoger en tienda";
-  const text = `Hola ${SHOP.name}, quiero hacer este pedido:\n\n${lines.join("\n")}\n\nEntrega: ${entrega}\nTotal: ${fmt(total)}`;
-  return `https://wa.me/${SHOP.whatsapp}?text=${encodeURIComponent(text)}`;
-}
