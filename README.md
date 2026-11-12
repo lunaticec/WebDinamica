@@ -9,39 +9,19 @@ npm install
 npm run dev     # http://localhost:3000
 ```
 
-## Personalizar tu negocio
+## Configurar el menú sin tocar código: `/admin`
 
-| Qué | Dónde |
+Entra a `/admin` (contraseña `ADMIN_PASSWORD`) → pestaña **Menú, precios y promociones**. Todo se guarda al pulsar **Guardar cambios** y la web pública lo muestra al instante:
+
+| Sección | Qué puedes hacer |
 | --- | --- |
-| Nombre, WhatsApp, moneda, horario, dirección | `lib/config.ts` |
-| Ingredientes, precios, tamaños, masas y pizzas del menú | `lib/pizza.ts` |
+| **Tamaños y masas** | Nombre, pulgadas, precio base y multiplicador de ingredientes por tamaño; masas con extra y borde relleno. Reordenar, agregar y eliminar. |
+| **Ingredientes** | Precio, forma con la que se dibuja (15 formas), piezas, y **Disponible / Agotado** con un interruptor. |
+| **Menú** | Pizzas prearmadas: nombre, descripción, ingredientes por porciones, visible u oculta. El precio se calcula solo. |
+| **Promociones** | Porcentaje, monto fijo, **2x1** o **envío gratis**; automáticas o con **código**; compra mínima, tamaños, días de la semana y rango de fechas. Se aplica solo la que más descuenta. |
+| **Negocio y reglas** | Nombre, horario, dirección, teléfono, costo de envío, IVA, zona horaria, tope y reserva del pago en local, plantones permitidos. |
 
-El número de WhatsApp debe ir con código de país y sin `+` (ej. `5215512345678`). La moneda se cambia con `currency` (`USD`, `MXN`, `COP`, `EUR`…).
-
-## Pagos, comprobante y anti-plantón
-
-Al pulsar **Continuar al pago** el cliente deja sus datos y elige:
-
-- **Pagar en línea (PayPhone):** paga con tarjeta o la app PayPhone. El servidor confirma el pago con PayPhone (no se confía en la URL de retorno ni en el navegador), valida el monto, marca el pedido como *pagado*, lo manda a cocina y envía el **comprobante con el ticket por correo**. También queda en `/pedido/<id>`, con botón para imprimir o guardar en PDF.
-- **Pagar en el local:** protegido contra pedidos falsos:
-  1. **Código por WhatsApp** al celular (válido 5 min, 5 intentos, reenvío cada 45 s, 3 códigos/hora por celular).
-  2. **Un pedido pendiente por celular** y tope de monto (`POLICY.localMaxTotal`).
-  3. El pedido queda **reservado 40 min** y **no entra a cocina** hasta que el cliente toque *Ya voy / Ya llegué* (o tú lo inicies en el panel).
-  4. Si vence o lo marcas *No se presentó* → **plantón**. Con 2 plantones el celular queda **bloqueado** para pagar en el local (sólo en línea). Cancelar a tiempo no penaliza.
-
-Los precios se **recalculan en el servidor**: el navegador nunca decide cuánto cuesta el pedido.
-
-### Panel del local: `/admin`
-
-Entra con `ADMIN_PASSWORD`. Columnas: *Por cocinar* · *Esperando al cliente* · *En cocina* · *Listos*, con botones A cocina / Listo / Entregado y cobrado / No se presentó, más la lista de celulares con plantones (bloquear/desbloquear). Se actualiza solo cada 5 s.
-
-### Puesta en marcha
-
-1. Copia `.env.local.example` a `.env.local` y completa las claves (ver el archivo).
-2. Sin claves, en **desarrollo** (`npm run dev`) todo funciona en modo prueba: el código de verificación sale en la consola, el pago es una pasarela simulada (`/pago-simulado`) y el panel usa la contraseña `admin`. **En producción (`npm start`) no hay modo prueba:** sin claves, el pago en local, el panel y el pago en línea se niegan a funcionar.
-3. Los pedidos se guardan en `.data/db.json` (un solo servidor). En Vercel u otro hosting serverless el disco no persiste: reemplaza `withDb` en `lib/server/store.ts` por una base de datos (Postgres, Supabase, Upstash…).
-
-Reglas editables en `lib/config.ts` (`POLICY`): minutos de reserva, plantones permitidos, tope de monto en local, IVA.
+Notas: los precios y promociones los **recalcula el servidor** en cada pedido; el comprobante guarda los nombres del momento del pedido (si luego renombras algo, los comprobantes viejos no cambian); eliminar un ingrediente lo quita también de las pizzas del menú. Los valores iniciales están en `lib/catalog.ts` (`DEFAULT_CATALOG`).
 
 ## Cómo funciona
 
@@ -60,5 +40,5 @@ components/sections/   Navbar, Hero, Menu, Cart, Footer
 components/ui/         GlowCard, MagneticButton, Reveal, SplitText, SectionHeading, Logo
 components/background/ fondo con gradientes y partículas que reaccionan al ratón
 components/cursor/     cursor personalizado
-lib/                   config.ts, pizza.ts, utils.ts
+lib/                   catalog.ts (valores iniciales y validación), pizza.ts (tipos y precios), promo.ts (promociones), server/ (pedidos, pagos)
 ```

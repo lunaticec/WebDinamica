@@ -1,7 +1,8 @@
 "use client";
 
 import { Wand2 } from "lucide-react";
-import { ING_BY_ID, PRESETS, calcPrice, type IngredientId } from "@/lib/pizza";
+import { calcPrice, ingOf, midSize } from "@/lib/pizza";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { formatPrice } from "@/lib/utils";
 import { GlowCard } from "@/components/ui/GlowCard";
 import { RevealGroup, RevealItem } from "@/components/ui/Reveal";
@@ -11,7 +12,10 @@ import { usePizza } from "@/components/pizza/PizzaProvider";
 import { useLenis } from "@/components/providers/SmoothScroll";
 
 export function Menu() {
+  const cat = useCatalog();
   const { loadPreset } = usePizza();
+  const ref = midSize(cat);
+  const presets = cat.presets.filter((p) => p.active);
   const lenis = useLenis();
 
   const pick = (id: string) => {
@@ -31,26 +35,28 @@ export function Menu() {
       />
 
       <RevealGroup className="mt-14 grid gap-4 sm:grid-cols-2">
-        {PRESETS.map((p) => (
+        {presets.map((p) => (
           <RevealItem key={p.id}>
             <GlowCard glow="255,120,40" className="h-full p-7" cursor="link" tilt={5}>
               <div className="flex h-full flex-col">
                 <div className="flex items-start justify-between gap-4">
                   <h3 className="font-display text-3xl font-semibold text-white">{p.name}</h3>
                   <span className="shrink-0 font-display text-2xl text-orange-300">
-                    {formatPrice(calcPrice(p.ingredients, "mediana", "clasica"))}
+                    {formatPrice(calcPrice(cat, p.ingredients, ref.id, cat.crusts[0].id))}
                   </span>
                 </div>
                 <p className="mt-2 text-[15px] text-white/55">{p.desc}</p>
 
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {(Object.keys(p.ingredients) as IngredientId[]).map((id) => (
+                  {Object.keys(p.ingredients)
+                    .filter((id) => ingOf(cat, id))
+                    .map((id) => (
                     <span
                       key={id}
                       className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] py-1 pl-1.5 pr-3 text-xs text-white/70"
                     >
-                      <Topping id={id} className="h-5 w-5" />
-                      {ING_BY_ID[id].name}
+                      <Topping shape={ingOf(cat, id)!.shape} className="h-5 w-5" />
+                      {ingOf(cat, id)!.name}
                       {(p.ingredients[id] ?? 0) > 1 && <b className="text-orange-300">×{p.ingredients[id]}</b>}
                     </span>
                   ))}
@@ -68,7 +74,7 @@ export function Menu() {
           </RevealItem>
         ))}
       </RevealGroup>
-      <p className="mt-4 text-sm text-white/35">Precios en tamaño mediano con masa clásica.</p>
+      <p className="mt-4 text-sm text-white/35">Precios en tamaño {ref.label.toLowerCase()} con masa {cat.crusts[0].label.toLowerCase()}.</p>
     </section>
   );
 }

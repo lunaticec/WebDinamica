@@ -1,8 +1,9 @@
 import { ArrowUp, Clock, MapPin, Phone } from "lucide-react";
-import { SHOP } from "@/lib/config";
+import { getCatalog } from "@/lib/server/catalog";
 import { Logo } from "@/components/ui/Logo";
 
-export function Footer() {
+export async function Footer() {
+  const { shop: SHOP } = await getCatalog();
   return (
     <footer className="section relative pb-28 pt-12 lg:pb-10">
       <div className="flex flex-col gap-8 border-t border-white/[0.06] pt-10 md:flex-row md:items-start md:justify-between">

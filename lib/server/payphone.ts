@@ -1,5 +1,6 @@
 import "server-only";
 import { splitTax } from "./pricing";
+import { getCatalog } from "./catalog";
 import type { Order } from "./types";
 
 /**
@@ -26,7 +27,7 @@ export async function preparePayment(order: Order, origin: string): Promise<PayU
   if (payphoneMock()) return { card: `${origin}/pago-simulado?o=${order.id}` };
   if (!payphoneConfigured()) throw new Error("PayPhone no está configurado");
 
-  const { amountWithTax, tax } = splitTax(order.totalCents);
+  const { amountWithTax, tax } = splitTax(order.totalCents, (await getCatalog()).policy.iva);
   const res = await fetch(`${BASE()}${PREPARE_PATH()}`, {
     method: "POST",
     headers: headers(),

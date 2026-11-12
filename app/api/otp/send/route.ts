@@ -1,4 +1,4 @@
-import { POLICY } from "@/lib/config";
+import { getCatalog } from "@/lib/server/catalog";
 import { json } from "@/lib/server/http";
 import { sendOtp } from "@/lib/server/notify";
 import { clientIp, hashOtp, newOtp, normalizeEcPhone } from "@/lib/server/security";
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
   try {
     const sent = await sendOtp(phone, (result as { code: string }).code);
-    return json({ ok: true, devCode: sent.dev, holdMinutes: POLICY.localHoldMinutes });
+    return json({ ok: true, devCode: sent.dev, holdMinutes: (await getCatalog()).policy.localHoldMinutes });
   } catch (e) {
     console.error(e);
     return json({ error: "send", message: "No pudimos enviar el código por WhatsApp. Intenta de nuevo o paga en línea." }, 502);

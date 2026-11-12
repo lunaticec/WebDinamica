@@ -1,5 +1,5 @@
 import "server-only";
-import { SHOP } from "@/lib/config";
+import { getCatalog } from "./catalog";
 import { receiptHtml } from "./receipt";
 import type { Order } from "./types";
 
@@ -48,14 +48,15 @@ export async function sendReceipt(order: Order, origin: string) {
     if (!isProd) console.log(`[DEV] Comprobante de ${order.code} → ${to} (configura RESEND_API_KEY para enviarlo)`);
     return;
   }
+  const cat = await getCatalog();
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: process.env.MAIL_FROM,
       to,
-      subject: `Tu comprobante ${order.code} · ${SHOP.name}`,
-      html: receiptHtml(order, `${origin}/pedido/${order.id}`),
+      subject: `Tu comprobante ${order.code} · ${cat.shop.name}`,
+      html: receiptHtml(order, `${origin}/pedido/${order.id}`, cat),
     }),
   });
   if (!res.ok) console.error("No se pudo enviar el comprobante:", res.status);

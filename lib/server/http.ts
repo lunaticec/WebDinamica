@@ -32,6 +32,8 @@ export function publicOrder(o: Order) {
     email: o.customer.email ? o.customer.email.replace(/^(.).*(@.*)$/, "$1•••$2") : undefined,
     items: o.items,
     deliveryFeeCents: o.deliveryFeeCents,
+    discountCents: o.discountCents ?? 0,
+    promoName: o.promo?.name,
     totalCents: o.totalCents,
     authCode: o.payphone?.authCode,
     timeline: o.timeline,

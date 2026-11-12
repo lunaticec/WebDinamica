@@ -3,7 +3,8 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { Menu, ShoppingBag, X } from "lucide-react";
 import { useState } from "react";
-import { NAV_LINKS, SHOP } from "@/lib/config";
+import { NAV_LINKS } from "@/lib/config";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 import { usePizza } from "@/components/pizza/PizzaProvider";
@@ -11,6 +12,7 @@ import { usePizza } from "@/components/pizza/PizzaProvider";
 export function Navbar() {
   const { scrollY, scrollYProgress } = useScroll();
   const { cart } = usePizza();
+  const cat = useCatalog();
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -35,7 +37,7 @@ export function Navbar() {
       >
         <a href="#top" aria-label="Inicio" className="flex items-center gap-2.5">
           <Logo />
-          <span className="font-display text-lg font-semibold tracking-tight">{SHOP.name}</span>
+          <span className="font-display text-lg font-semibold tracking-tight">{cat.shop.name}</span>
         </a>
 
         <ul className="hidden items-center gap-1 md:flex">

@@ -3,8 +3,8 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Flame } from "lucide-react";
 import { useRef } from "react";
-import { INGREDIENTS } from "@/lib/pizza";
-import { SHOP } from "@/lib/config";
+import type { ShapeId } from "@/lib/pizza";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { SplitText } from "@/components/ui/SplitText";
 import { Topping } from "@/components/pizza/Topping";
@@ -21,6 +21,7 @@ const FLOATERS = [
 ] as const;
 
 export function Hero() {
+  const cat = useCatalog();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const textY = useTransform(scrollYProgress, [0, 1], ["0%", "-30%"]);
@@ -49,7 +50,7 @@ export function Hero() {
             style={{ width: f.s, height: f.s }}
             className="blur-[0.5px] drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
           >
-            <Topping id={f.id as (typeof INGREDIENTS)[number]["id"]} className="h-full w-full" />
+            <Topping shape={f.id as ShapeId} className="h-full w-full" />
           </motion.div>
         </motion.div>
       ))}
@@ -62,7 +63,7 @@ export function Hero() {
           className="eyebrow"
         >
           <Flame size={13} className="text-orange-400" />
-          {SHOP.name} · {SHOP.tagline}
+          {cat.shop.name} · {cat.shop.tagline}
         </motion.div>
 
         <h1 className="mx-auto mt-8 max-w-5xl font-display text-display-xl font-semibold text-white" data-cursor="text">

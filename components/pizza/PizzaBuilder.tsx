@@ -3,8 +3,7 @@
 import { AnimatePresence, motion, useInView } from "framer-motion";
 import { Flame } from "lucide-react";
 import { useRef } from "react";
-import { CRUSTS, SIZES } from "@/lib/pizza";
-import { SHOP } from "@/lib/config";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { formatPrice } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { IngredientTray } from "./IngredientTray";
@@ -19,6 +18,7 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 export function PizzaBuilder() {
+  const cat = useCatalog();
   const { size, setSize, crust, setCrust } = usePizza();
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { amount: 0.1 });
@@ -36,7 +36,7 @@ export function PizzaBuilder() {
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-red-700">
             <Flame size={22} />
-            <span className="font-display text-2xl font-extrabold uppercase tracking-tight">{SHOP.name}</span>
+            <span className="font-display text-2xl font-extrabold uppercase tracking-tight">{cat.shop.name}</span>
           </div>
           <p className="hidden font-mono text-[11px] uppercase tracking-[0.25em] text-stone-500 sm:block">
             Hecha a mano · Horneada al momento
@@ -67,7 +67,7 @@ export function PizzaBuilder() {
                   name="size"
                   value={size}
                   onChange={setSize}
-                  options={SIZES.map((s) => ({ id: s.id, label: s.label, sub: `${s.inches}″` }))}
+                  options={cat.sizes.map((s) => ({ id: s.id, label: s.label, sub: `${s.inches}″` }))}
                 />
               </div>
               <div>
@@ -76,7 +76,7 @@ export function PizzaBuilder() {
                   name="crust"
                   value={crust}
                   onChange={setCrust}
-                  options={CRUSTS.map((c) => ({ id: c.id, label: c.label.replace("Borde de queso", "Queso"), sub: c.extra ? `+${formatPrice(c.extra)}` : c.desc }))}
+                  options={cat.crusts.map((c) => ({ id: c.id, label: c.label, sub: c.extra ? `+${formatPrice(c.extra)}` : c.desc }))}
                 />
               </div>
             </div>

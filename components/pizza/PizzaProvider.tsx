@@ -4,18 +4,21 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
   type RefObject,
 } from "react";
-import { SHOP } from "@/lib/config";
+import { useCatalog } from "@/components/providers/CatalogProvider";
+import { quote as makeQuote, type Quote } from "@/lib/promo";
 import {
-  MAX_PER_INGREDIENT,
-  PRESETS,
   calcPrice,
   createLayer,
+  crustOf,
+  ingOf,
+  sizeOf,
   type CartItem,
   type Counts,
   type CrustId,
@@ -35,12 +38,17 @@ type PizzaCtx = {
   cart: CartItem[];
   cartTotal: number;
   delivery: Delivery;
+  /** Costo de envío (antes de promociones), en dólares */
   deliveryFee: number;
   /** Pizza que se está armando ahora, como línea de ticket */
   current: CartItem;
   /** Pizzas del carrito + la actual (si tiene algo o el carrito está vacío) */
   orderItems: CartItem[];
+  /** Total final con envío y promoción, en dólares */
   orderTotal: number;
+  quote: Quote;
+  promoCode: string;
+  setPromoCode: (c: string) => void;
   /** El usuario está arrastrando un ingrediente sobre la pizza */
   over: boolean;
   pizzaRef: RefObject<HTMLDivElement | null>;
@@ -68,22 +76,40 @@ export function usePizza() {
 }
 
 export function PizzaProvider({ children }: { children: ReactNode }) {
+  const cat = useCatalog();
   const [layers, setLayers] = useState<Layer[]>([]);
-  const [size, setSize] = useState<SizeId>("mediana");
-  const [crust, setCrust] = useState<CrustId>("clasica");
+  const [sizeId, setSize] = useState<SizeId>(() => cat.sizes[Math.floor((cat.sizes.length - 1) / 2)].id);
+  const [crustId, setCrust] = useState<CrustId>(() => cat.crusts[0].id);
   const [presetName, setPresetName] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [over, setOver] = useState(false);
   const [delivery, setDelivery] = useState<Delivery>("recoger");
+  const [promoCode, setPromoCode] = useState("");
+  const [now, setNow] = useState<Date | null>(null);
   const pizzaRef = useRef<HTMLDivElement>(null);
+
+  // Reloj del cliente para promociones por fecha/día (se evita en el primer render para no desajustar la hidratación)
+  useEffect(() => {
+    setNow(new Date());
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Si el dueño borra el tamaño/masa elegido, se cae al más cercano disponible.
+  const size = sizeOf(cat, sizeId).id;
+  const crust = crustOf(cat, crustId).id;
+  const maxPer = cat.policy.maxPerIngredient;
+
+  // Ingredientes que ya no existen o se agotaron salen de la pizza automáticamente.
+  const liveLayers = useMemo(() => layers.filter((l) => ingOf(cat, l.ing)?.available), [layers, cat]);
 
   const counts = useMemo(() => {
     const c: Counts = {};
-    for (const l of layers) c[l.ing] = (c[l.ing] ?? 0) + 1;
+    for (const l of liveLayers) c[l.ing] = (c[l.ing] ?? 0) + 1;
     return c;
-  }, [layers]);
+  }, [liveLayers]);
 
-  const price = useMemo(() => calcPrice(counts, size, crust), [counts, size, crust]);
+  const price = useMemo(() => calcPrice(cat, counts, size, crust), [cat, counts, size, crust]);
   const cartTotal = useMemo(() => cart.reduce((s, i) => s + i.price, 0), [cart]);
 
   const current = useMemo<CartItem>(
@@ -91,18 +117,22 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
     [presetName, size, crust, counts, price]
   );
   const orderItems = useMemo(
-    () => (layers.length > 0 || cart.length === 0 ? [...cart, current] : cart),
-    [layers.length, cart, current]
+    () => (liveLayers.length > 0 || cart.length === 0 ? [...cart, current] : cart),
+    [liveLayers.length, cart, current]
   );
-  const deliveryFee = delivery === "domicilio" ? SHOP.deliveryFee : 0;
-  const orderTotal = useMemo(() => orderItems.reduce((s, i) => s + i.price, 0) + deliveryFee, [orderItems, deliveryFee]);
+  const quote = useMemo(
+    () => makeQuote(cat, orderItems.map((i) => ({ size: i.size, price: i.price })), delivery, promoCode, now ?? new Date(0)),
+    [cat, orderItems, delivery, promoCode, now]
+  );
 
-  const addIngredient = useCallback((id: IngredientId) => {
-    setLayers((prev) =>
-      prev.filter((l) => l.ing === id).length >= MAX_PER_INGREDIENT ? prev : [...prev, createLayer(id)]
-    );
-    setPresetName(null);
-  }, []);
+  const addIngredient = useCallback(
+    (id: IngredientId) => {
+      if (!ingOf(cat, id)?.available) return;
+      setLayers((prev) => (prev.filter((l) => l.ing === id).length >= maxPer ? prev : [...prev, createLayer(cat, id)]));
+      setPresetName(null);
+    },
+    [cat, maxPer]
+  );
 
   const removeIngredient = useCallback((id: IngredientId) => {
     setLayers((prev) => {
@@ -117,32 +147,26 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
     setPresetName(null);
   }, []);
 
-  const loadPreset = useCallback((id: string) => {
-    const preset = PRESETS.find((p) => p.id === id);
-    if (!preset) return;
-    const next: Layer[] = [];
-    for (const [ing, qty] of Object.entries(preset.ingredients)) {
-      for (let i = 0; i < (qty ?? 0); i++) next.push(createLayer(ing as IngredientId));
-    }
-    setLayers(next);
-    setPresetName(preset.name);
-  }, []);
+  const loadPreset = useCallback(
+    (id: string) => {
+      const preset = cat.presets.find((p) => p.id === id);
+      if (!preset) return;
+      const next: Layer[] = [];
+      for (const [ing, qty] of Object.entries(preset.ingredients)) {
+        if (!ingOf(cat, ing)?.available) continue;
+        for (let i = 0; i < Math.min(qty ?? 0, maxPer); i++) next.push(createLayer(cat, ing));
+      }
+      setLayers(next);
+      setPresetName(preset.name);
+    },
+    [cat, maxPer]
+  );
 
   const addToCart = useCallback(() => {
-    setCart((prev) => [
-      ...prev,
-      {
-        uid: `${Date.now()}-${prev.length}`,
-        name: presetName ?? "Pizza personalizada",
-        size,
-        crust,
-        ingredients: counts,
-        price,
-      },
-    ]);
+    setCart((prev) => [...prev, { ...current, uid: `${Date.now()}-${prev.length}` }]);
     setLayers([]);
     setPresetName(null);
-  }, [presetName, size, crust, counts, price]);
+  }, [current]);
 
   const removeFromCart = useCallback((uid: string) => setCart((p) => p.filter((i) => i.uid !== uid)), []);
   const clearCart = useCallback(() => setCart([]), []);
@@ -150,10 +174,11 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
     setLayers([]);
     setCart([]);
     setPresetName(null);
+    setPromoCode("");
   }, []);
 
   const value: PizzaCtx = {
-    layers,
+    layers: liveLayers,
     counts,
     size,
     crust,
@@ -162,14 +187,17 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
     cart,
     cartTotal,
     delivery,
-    deliveryFee,
+    deliveryFee: quote.deliveryFeeCents / 100,
     current,
     orderItems,
-    orderTotal,
-    setDelivery,
+    orderTotal: quote.totalCents / 100,
+    quote,
+    promoCode,
+    setPromoCode,
     over,
     pizzaRef,
     setOver,
+    setDelivery,
     setSize,
     setCrust,
     addIngredient,

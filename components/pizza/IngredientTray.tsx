@@ -3,16 +3,19 @@
 import { motion } from "framer-motion";
 import { Check, Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { INGREDIENTS, MAX_PER_INGREDIENT, SIZES, type Ingredient } from "@/lib/pizza";
+import { sizeOf, type Ingredient } from "@/lib/pizza";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn, formatPrice } from "@/lib/utils";
 import { Topping } from "./Topping";
 import { usePizza } from "./PizzaProvider";
 
 function Tile({ ing, canDrag }: { ing: Ingredient; canDrag: boolean }) {
+  const cat = useCatalog();
   const { counts, addIngredient, removeIngredient, pizzaRef, setOver, size } = usePizza();
   const qty = counts[ing.id] ?? 0;
-  const full = qty >= MAX_PER_INGREDIENT;
-  const mult = SIZES.find((s) => s.id === size)!.mult;
+  const soldOut = !ing.available;
+  const full = qty >= cat.policy.maxPerIngredient || soldOut;
+  const mult = sizeOf(cat, size).mult;
 
   const isOverPizza = (pt: { x: number; y: number }) => {
     const r = pizzaRef.current?.getBoundingClientRect();
@@ -26,7 +29,8 @@ function Tile({ ing, canDrag }: { ing: Ingredient; canDrag: boolean }) {
     <div
       className={cn(
         "relative rounded-2xl bg-white p-2 shadow-[0_8px_18px_-10px_rgba(0,0,0,0.5)] ring-2 transition-all duration-300",
-        qty > 0 ? "ring-red-600" : "ring-transparent hover:ring-black/10"
+        qty > 0 ? "ring-red-600" : "ring-transparent hover:ring-black/10",
+        soldOut && "opacity-45 grayscale"
       )}
     >
       {qty > 0 && (
@@ -56,13 +60,13 @@ function Tile({ ing, canDrag }: { ing: Ingredient; canDrag: boolean }) {
         }}
         onTap={() => !full && addIngredient(ing.id)}
         data-cursor="drag"
-        data-cursor-label={full ? "Máx." : "Arrastra"}
+        data-cursor-label={soldOut ? "Agotado" : full ? "Máx." : "Arrastra"}
         className="relative flex select-none flex-col items-center gap-1 rounded-xl px-1 pb-1 pt-2"
       >
-        <Topping id={ing.id} className="pointer-events-none h-12 w-12 drop-shadow-md sm:h-14 sm:w-14" />
+        <Topping shape={ing.shape} className="pointer-events-none h-12 w-12 drop-shadow-md sm:h-14 sm:w-14" />
         <span className="pointer-events-none text-[13px] font-semibold leading-tight text-stone-800">{ing.name}</span>
         <span className="pointer-events-none rounded-full bg-stone-100 px-2 py-0.5 font-mono text-[11px] text-stone-500">
-          +{formatPrice(ing.price * mult)}
+          {soldOut ? "Agotado" : `+${formatPrice(ing.price * mult)}`}
         </span>
       </motion.div>
 
@@ -92,6 +96,7 @@ function Tile({ ing, canDrag }: { ing: Ingredient; canDrag: boolean }) {
 }
 
 export function IngredientTray() {
+  const cat = useCatalog();
   const [canDrag, setCanDrag] = useState(false);
   useEffect(() => {
     // Arrastrar sólo con ratón; en táctil se usa toque / botones para no bloquear el scroll
@@ -100,7 +105,7 @@ export function IngredientTray() {
 
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-2">
-      {INGREDIENTS.map((ing) => (
+      {cat.ingredients.map((ing) => (
         <Tile key={ing.id} ing={ing} canDrag={canDrag} />
       ))}
     </div>

@@ -1,4 +1,4 @@
-import type { CartItem, Delivery } from "@/lib/pizza";
+import type { Catalog, CartItem, Delivery } from "@/lib/pizza";
 
 export type OrderStatus =
   | "pendiente_pago" // pago en línea iniciado, aún sin confirmar
@@ -27,7 +27,11 @@ export type Order = {
   address?: string;
   customer: { name: string; phone: string; email?: string };
   items: CartItem[];
+  /** Costo de envío (antes de promociones) */
   deliveryFeeCents: number;
+  /** Descuento aplicado por promoción */
+  discountCents?: number;
+  promo?: { id: string; name: string; code?: string };
   totalCents: number;
   payphone?: { paymentId?: number; transactionId?: string; authCode?: string };
   timeline: { at: number; status: OrderStatus; note?: string }[];
@@ -48,6 +52,8 @@ export type DB = {
   phones: Record<string, PhoneRecord>;
   otps: Record<string, OtpRecord>;
   hits: Record<string, number[]>;
+  /** Catálogo editable; si falta se usa DEFAULT_CATALOG */
+  catalog?: Catalog;
 };
 
 /** Estados en los que un pedido "pago en local" sigue reservando cupo para ese celular. */

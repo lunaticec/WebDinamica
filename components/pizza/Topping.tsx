@@ -1,15 +1,15 @@
-import type { IngredientId } from "@/lib/pizza";
+import type { ShapeId } from "@/lib/pizza";
 
 /** Dibujo vectorial de cada ingrediente (viewBox 40x40). */
-export function Topping({ id, className }: { id: IngredientId; className?: string }) {
+export function Topping({ shape, className }: { shape: ShapeId; className?: string }) {
   return (
     <svg viewBox="0 0 40 40" className={className} aria-hidden>
-      {SHAPES[id]}
+      {DRAW[shape]}
     </svg>
   );
 }
 
-const SHAPES: Record<IngredientId, React.ReactNode> = {
+const DRAW: Record<ShapeId, React.ReactNode> = {
   pepperoni: (
     <>
       <circle cx="20" cy="20" r="17" fill="#c23a2b" />
@@ -68,6 +68,38 @@ const SHAPES: Record<IngredientId, React.ReactNode> = {
     </>
   ),
   maiz: <ellipse cx="20" cy="20" rx="13" ry="17" fill="#ffd23f" stroke="#e5ab12" strokeWidth="3" />,
+  pollo: (
+    <>
+      <path d="M6 16 Q8 5 20 6 Q34 6 35 19 Q35 32 21 34 Q7 33 6 16Z" fill="#f1c97a" stroke="#d9a94a" strokeWidth="2" />
+      <path d="M12 16 Q18 12 26 16 M13 24 Q20 21 28 25" stroke="#e0b05a" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+    </>
+  ),
+  salchicha: (
+    <>
+      <circle cx="20" cy="20" r="16" fill="#a4452f" />
+      <circle cx="20" cy="20" r="16" fill="none" stroke="#7d2f1e" strokeWidth="2" />
+      <circle cx="14" cy="15" r="2" fill="#e8a58c" />
+      <circle cx="25" cy="17" r="1.6" fill="#e8a58c" />
+      <circle cx="19" cy="26" r="2" fill="#e8a58c" />
+    </>
+  ),
+  jalapeno: (
+    <>
+      <circle cx="20" cy="20" r="14" fill="#5aa83a" />
+      <circle cx="20" cy="20" r="9" fill="#cfe8a4" />
+      <circle cx="17" cy="19" r="1.4" fill="#f5f9e4" />
+      <circle cx="23" cy="21" r="1.4" fill="#f5f9e4" />
+      <circle cx="20" cy="24" r="1.4" fill="#f5f9e4" />
+    </>
+  ),
+  queso: (
+    <>
+      <path d="M5 28 L16 7 L35 22 L33 31 Z" fill="#ffd45a" stroke="#e0a91c" strokeWidth="2" strokeLinejoin="round" />
+      <circle cx="18" cy="20" r="2.4" fill="#f0b82a" />
+      <circle cx="26" cy="25" r="1.8" fill="#f0b82a" />
+      <circle cx="13" cy="26" r="1.5" fill="#f0b82a" />
+    </>
+  ),
   albahaca: (
     <>
       <path d="M20 37 C3 29 5 10 20 3 C35 10 37 29 20 37Z" fill="#2f8c3e" />

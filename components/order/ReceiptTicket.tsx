@@ -2,6 +2,7 @@
 
 import { SHOP } from "@/lib/config";
 import { describeItem, type CartItem } from "@/lib/pizza";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn, formatPrice } from "@/lib/utils";
 import { Flame } from "lucide-react";
 
@@ -21,6 +22,8 @@ export type PublicOrder = {
   email?: string;
   items: CartItem[];
   deliveryFeeCents: number;
+  discountCents?: number;
+  promoName?: string;
   totalCents: number;
   authCode?: string;
   timeline: { at: number; status: string; note?: string }[];
@@ -28,15 +31,17 @@ export type PublicOrder = {
 
 /** Comprobante en formato ticket (mismo estilo que el ticket del constructor). */
 export function ReceiptTicket({ order }: { order: PublicOrder }) {
+  const cat = useCatalog();
+  const shop = cat.shop;
   return (
     <div id="receipt" className="relative mx-auto w-full max-w-[400px] drop-shadow-[0_30px_30px_rgba(0,0,0,0.35)] print:drop-shadow-none">
       <div className="bg-[#fbfaf6] px-6 pb-6 pt-7 font-mono text-[13px] leading-snug text-stone-800">
         <div className="text-center">
           <div className="flex items-center justify-center gap-1.5 text-red-700">
             <Flame size={20} />
-            <span className="font-display text-3xl font-extrabold uppercase tracking-tight">{SHOP.name}</span>
+            <span className="font-display text-3xl font-extrabold uppercase tracking-tight">{shop.name}</span>
           </div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">{SHOP.tagline}</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">{shop.tagline}</p>
           <p className="mt-3 text-[11px] text-stone-400">
             Comprobante {order.code} · {new Date(order.createdAt).toLocaleString(SHOP.locale, { dateStyle: "medium", timeStyle: "short" })}
           </p>
@@ -46,7 +51,7 @@ export function ReceiptTicket({ order }: { order: PublicOrder }) {
 
         <ul className="space-y-3">
           {order.items.map((it) => {
-            const d = describeItem(it);
+            const d = describeItem(cat, it);
             return (
               <li key={it.uid}>
                 <div className="flex items-baseline justify-between gap-3 font-bold">
@@ -63,6 +68,12 @@ export function ReceiptTicket({ order }: { order: PublicOrder }) {
               <span className="tabular-nums">{formatPrice(order.deliveryFeeCents / 100)}</span>
             </li>
           )}
+          {!!order.discountCents && (
+            <li className="flex justify-between font-bold text-emerald-700">
+              <span>🏷 {order.promoName ?? "Promoción"}</span>
+              <span className="tabular-nums">−{formatPrice(order.discountCents / 100)}</span>
+            </li>
+          )}
         </ul>
 
         <hr className="my-4 border-dashed border-stone-300" />
@@ -71,7 +82,7 @@ export function ReceiptTicket({ order }: { order: PublicOrder }) {
           <span className="text-lg font-bold uppercase">Total</span>
           <span className="font-display text-4xl font-extrabold tracking-tight text-stone-900">{formatPrice(order.totalCents / 100)}</span>
         </div>
-        <p className="text-right text-[10px] text-stone-400">IVA incluido</p>
+        <p className="text-right text-[10px] text-stone-400">IVA {Math.round(cat.policy.iva * 100)}% incluido</p>
 
         <div
           className={cn(
@@ -99,7 +110,7 @@ export function ReceiptTicket({ order }: { order: PublicOrder }) {
               "repeating-linear-gradient(90deg,#1c1917 0 2px,transparent 2px 4px,#1c1917 4px 5px,transparent 5px 8px,#1c1917 8px 11px,transparent 11px 13px,#1c1917 13px 14px,transparent 14px 17px)",
           }}
         />
-        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.25em] text-stone-400">{SHOP.hours}</p>
+        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.25em] text-stone-400">{shop.hours}</p>
       </div>
       <div className="ticket-edge" />
     </div>

@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowLeft, Check, Clock, CreditCard, Loader2, Printer, S
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { POLICY, SHOP } from "@/lib/config";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn } from "@/lib/utils";
 import { ReceiptTicket, type PublicOrder } from "@/components/order/ReceiptTicket";
 
@@ -34,6 +34,8 @@ function useCountdown(until?: number) {
 }
 
 export default function OrderPage() {
+  const cat = useCatalog();
+  const SHOP = cat.shop;
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<PublicOrder | null>(null);
   const [missing, setMissing] = useState(false);
@@ -78,13 +80,13 @@ export default function OrderPage() {
 
   if (missing)
     return (
-      <Shell>
+      <Shell name={SHOP.name}>
         <p className="py-20 text-center text-white/60">No encontramos este pedido.</p>
       </Shell>
     );
   if (!order)
     return (
-      <Shell>
+      <Shell name={SHOP.name}>
         <Loader2 className="mx-auto mt-24 animate-spin text-white/50" />
       </Shell>
     );
@@ -93,10 +95,10 @@ export default function OrderPage() {
   const dead = ["cancelado", "expirado", "no_show"].includes(order.status);
 
   return (
-    <Shell>
+    <Shell name={SHOP.name}>
       <div className="grid items-start gap-10 lg:grid-cols-[1fr_400px]">
         <div className="space-y-6">
-          <Banner order={order} countdown={countdown} flags={flags} />
+          <Banner order={order} countdown={countdown} flags={flags} policy={cat.policy} />
 
           {!dead && order.status !== "pendiente_pago" && (
             <ol className="flex items-center gap-2 print:hidden">
@@ -157,18 +159,18 @@ export default function OrderPage() {
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, name }: { children: React.ReactNode; name: string }) {
   return (
     <main className="section py-10 sm:py-16">
       <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm text-white/50 transition hover:text-white print:hidden">
-        <ArrowLeft size={16} /> Volver a {SHOP.name}
+        <ArrowLeft size={16} /> Volver a {name}
       </Link>
       {children}
     </main>
   );
 }
 
-function Banner({ order, countdown, flags }: { order: PublicOrder; countdown: string | null; flags: { rechazado: boolean; error: boolean } }) {
+function Banner({ order, countdown, flags, policy: POLICY }: { order: PublicOrder; countdown: string | null; flags: { rechazado: boolean; error: boolean }; policy: { localHoldMinutes: number; maxStrikes: number } }) {
   let tone: "ok" | "warn" | "bad" = "ok";
   let title = "";
   let text = "";

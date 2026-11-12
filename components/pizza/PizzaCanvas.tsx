@@ -1,15 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { CRUSTS, SIZES } from "@/lib/pizza";
+import { crustOf, sizeOf } from "@/lib/pizza";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { Topping } from "./Topping";
 import { usePizza } from "./PizzaProvider";
 
 /** La pizza dentro de su caja de cartón, sobre papel de horno. Cada ingrediente cae con física de resorte. */
 export function PizzaCanvas() {
+  const cat = useCatalog();
   const { layers, size, crust, over, pizzaRef } = usePizza();
-  const scale = SIZES.find((s) => s.id === size)!.scale;
-  const crustW = CRUSTS.find((c) => c.id === crust)!.width;
+  const scale = sizeOf(cat, size).scale;
+  const crustDef = crustOf(cat, crust);
+  const crustW = crustDef.width;
 
   return (
     <div>
@@ -54,7 +57,7 @@ export function PizzaCanvas() {
             <div
               aria-hidden
               className="absolute inset-[2.4%] rounded-full border-[3px] border-dashed border-white/70 transition-opacity duration-500"
-              style={{ opacity: crust === "queso" ? 1 : 0 }}
+              style={{ opacity: crustDef.stuffed ? 1 : 0 }}
             />
             {/* Salsa */}
             <div
@@ -113,7 +116,7 @@ export function PizzaCanvas() {
                         transition={{ type: "spring", stiffness: 240, damping: 17, delay: p.delay }}
                         className="h-full w-full drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)]"
                       >
-                        <Topping id={p.ing} className="h-full w-full" />
+                        <Topping shape={p.shape} className="h-full w-full" />
                       </motion.div>
                     </div>
                   ))

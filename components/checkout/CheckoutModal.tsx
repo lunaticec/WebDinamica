@@ -5,7 +5,7 @@ import { ArrowLeft, CreditCard, Loader2, MessageCircle, ShieldCheck, Store, X } 
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useEffect, useState, type ReactNode } from "react";
-import { POLICY, SHOP } from "@/lib/config";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { cn, formatPrice } from "@/lib/utils";
 import { usePizza } from "@/components/pizza/PizzaProvider";
 import { useLenis } from "@/components/providers/SmoothScroll";
@@ -33,7 +33,9 @@ const inputCls =
   "h-12 w-full rounded-xl border border-stone-300 bg-white px-4 text-stone-900 outline-none transition placeholder:text-stone-300 focus:border-red-600 focus:ring-2 focus:ring-red-600/20";
 
 export function CheckoutModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { orderItems, orderTotal, delivery, resetAll } = usePizza();
+  const cat = useCatalog();
+  const POLICY = cat.policy;
+  const { orderItems, orderTotal, delivery, resetAll, promoCode } = usePizza();
   const lenis = useLenis();
   const router = useRouter();
 
@@ -85,6 +87,7 @@ export function CheckoutModal({ open, onClose }: { open: boolean; onClose: () =>
     delivery,
     address,
     payMethod: method,
+    promoCode,
     token,
   });
 
@@ -285,7 +288,7 @@ export function CheckoutModal({ open, onClose }: { open: boolean; onClose: () =>
                     Pagar con la app PayPhone
                   </a>
                 )}
-                <p className="text-center text-xs text-stone-400">{SHOP.name} no guarda los datos de tu tarjeta.</p>
+                <p className="text-center text-xs text-stone-400">{cat.shop.name} no guarda los datos de tu tarjeta.</p>
               </div>
             )}
           </motion.div>

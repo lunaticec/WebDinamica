@@ -4,13 +4,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CreditCard, Flame, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SHOP } from "@/lib/config";
-import { CRUSTS, INGREDIENTS, SIZES, describeItem } from "@/lib/pizza";
+import { crustOf, describeItem, ingOf, sizeOf } from "@/lib/pizza";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { CheckoutModal } from "@/components/checkout/CheckoutModal";
 import { cn, formatPrice } from "@/lib/utils";
 import { AnimatedPrice } from "./AnimatedPrice";
 import { usePizza } from "./PizzaProvider";
 
-function Row({ label, amount, muted, onRemove }: { label: string; amount: string; muted?: boolean; onRemove?: () => void }) {
+function Row({ label, amount, muted, good, onRemove }: { label: string; amount: string; muted?: boolean; good?: boolean; onRemove?: () => void }) {
   return (
     <motion.li
       layout
@@ -20,7 +21,7 @@ function Row({ label, amount, muted, onRemove }: { label: string; amount: string
       transition={{ duration: 0.3 }}
       className="overflow-hidden"
     >
-      <div className={cn("flex items-baseline gap-2 py-[3px]", muted && "text-stone-500")}>
+      <div className={cn("flex items-baseline gap-2 py-[3px]", muted && "text-stone-500", good && "font-bold text-emerald-700")}>
         {onRemove && (
           <button type="button" aria-label="Quitar" onClick={onRemove} className="-ml-1 text-stone-400 transition hover:text-red-600">
             <X size={13} />
@@ -38,8 +39,9 @@ function Row({ label, amount, muted, onRemove }: { label: string; amount: string
 export function Ticket() {
   const {
     size, crust, counts, layers, cart, removeFromCart, addToCart, clearPizza,
-    delivery, setDelivery, deliveryFee, orderItems, orderTotal, presetName,
+    delivery, setDelivery, deliveryFee, orderTotal, presetName, quote, promoCode, setPromoCode,
   } = usePizza();
+  const cat = useCatalog();
 
   const [stamp, setStamp] = useState("");
   const [checkout, setCheckout] = useState(false);
@@ -59,9 +61,9 @@ export function Ticket() {
     return () => clearTimeout(t);
   }, [orderTotal]);
 
-  const s = SIZES.find((x) => x.id === size)!;
-  const c = CRUSTS.find((x) => x.id === crust)!;
-  const tops = INGREDIENTS.filter((i) => counts[i.id]);
+  const s = sizeOf(cat, size);
+  const c = crustOf(cat, crust);
+  const tops = cat.ingredients.filter((i) => counts[i.id]);
   const showCurrent = layers.length > 0 || cart.length === 0;
 
   return (
@@ -77,9 +79,9 @@ export function Ticket() {
         <div className="text-center">
           <div className="flex items-center justify-center gap-1.5 text-red-700">
             <Flame size={20} />
-            <span className="font-display text-3xl font-extrabold uppercase tracking-tight">{SHOP.name}</span>
+            <span className="font-display text-3xl font-extrabold uppercase tracking-tight">{cat.shop.name}</span>
           </div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">{SHOP.tagline}</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">{cat.shop.tagline}</p>
           <p className="mt-2 text-[11px] text-stone-400">{stamp || " "}</p>
         </div>
 
@@ -89,7 +91,7 @@ export function Ticket() {
         <ul>
           <AnimatePresence initial={false}>
             {cart.map((it) => {
-              const d = describeItem(it);
+              const d = describeItem(cat, it);
               return (
                 <Row
                   key={it.uid}
@@ -153,7 +155,7 @@ export function Ticket() {
           {(
             [
               { id: "recoger", label: "Recoger en tienda", fee: "Gratis" },
-              { id: "domicilio", label: "A domicilio", fee: `+${formatPrice(SHOP.deliveryFee)}` },
+              { id: "domicilio", label: "A domicilio", fee: `+${formatPrice(cat.shop.deliveryFee)}` },
             ] as const
           ).map((o) => (
             <button
@@ -181,11 +183,26 @@ export function Ticket() {
             </button>
           ))}
         </div>
-        {deliveryFee > 0 && (
+        {(deliveryFee > 0 || quote.discountCents > 0) && (
           <ul className="mt-2">
-            <Row label="Envío" amount={formatPrice(deliveryFee)} muted />
+            {deliveryFee > 0 && <Row label="Envío" amount={formatPrice(deliveryFee)} muted />}
+            {quote.discountCents > 0 && quote.promo && <Row label={`🏷 ${quote.promo.name}`} amount={`−${formatPrice(quote.discountCents / 100)}`} good />}
           </ul>
         )}
+
+        {/* Código promocional */}
+        <div className="mt-3">
+          <input
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 20))}
+            placeholder="¿Tienes un código?"
+            aria-label="Código promocional"
+            className="h-9 w-full rounded border border-dashed border-stone-300 bg-transparent px-3 text-xs uppercase tracking-widest outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-stone-400 focus:border-red-600"
+          />
+          {quote.codeStatus === "ok" && <p className="mt-1 text-[11px] font-bold text-emerald-700">✔ Código aplicado</p>}
+          {quote.codeStatus === "invalid" && <p className="mt-1 text-[11px] text-red-600">Código no válido</p>}
+          {quote.codeStatus === "not_applicable" && <p className="mt-1 text-[11px] text-amber-700">Este código no aplica a tu pedido (revisa tamaño, monto o fecha)</p>}
+        </div>
 
         <hr className="my-4 border-dashed border-stone-300" />
 
@@ -234,7 +251,7 @@ export function Ticket() {
               "repeating-linear-gradient(90deg,#1c1917 0 2px,transparent 2px 4px,#1c1917 4px 5px,transparent 5px 8px,#1c1917 8px 11px,transparent 11px 13px,#1c1917 13px 14px,transparent 14px 17px)",
           }}
         />
-        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.25em] text-stone-400">Gracias · {SHOP.hours}</p>
+        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.25em] text-stone-400">Gracias · {cat.shop.hours}</p>
       </div>
       <div className="ticket-edge" />
     </motion.div>

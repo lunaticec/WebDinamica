@@ -1,7 +1,8 @@
 import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
-import { POLICY } from "@/lib/config";
+import { DEFAULT_CATALOG } from "@/lib/catalog";
+import type { Catalog, PolicyCfg } from "@/lib/pizza";
 import type { DB, Order, OrderStatus, PhoneRecord } from "./types";
 
 /**
@@ -42,6 +43,14 @@ export function withDb<T>(fn: (db: DB) => T | Promise<T>): Promise<T> {
   return run;
 }
 
+export const policyOf = (db: DB): PolicyCfg => (db.catalog ?? DEFAULT_CATALOG).policy;
+export const catalogOf = (db: DB): Catalog => db.catalog ?? DEFAULT_CATALOG;
+
+/** Lectura sin escribir en disco (para renderizar páginas). */
+export async function peek<T>(fn: (db: DB) => T): Promise<T> {
+  return fn(await load());
+}
+
 export function setStatus(order: Order, status: OrderStatus, note?: string) {
   const now = Date.now();
   order.status = status;
@@ -53,7 +62,7 @@ export function addStrike(db: DB, phone: string, reason: string) {
   const rec: PhoneRecord = db.phones[phone] ?? { phone, strikes: 0, blocked: false, updatedAt: 0 };
   rec.strikes += 1;
   rec.updatedAt = Date.now();
-  if (rec.strikes >= POLICY.maxStrikes) {
+  if (rec.strikes >= policyOf(db).maxStrikes) {
     rec.blocked = true;
     rec.note = reason;
   }
@@ -62,7 +71,7 @@ export function addStrike(db: DB, phone: string, reason: string) {
 
 export function isBlocked(db: DB, phone: string) {
   const r = db.phones[phone];
-  return !!r && (r.blocked || r.strikes >= POLICY.maxStrikes);
+  return !!r && (r.blocked || r.strikes >= policyOf(db).maxStrikes);
 }
 
 /** Expira pedidos vencidos. Un "pago en local" que nunca avisó cuenta como plantón. */

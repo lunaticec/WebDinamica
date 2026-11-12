@@ -1,4 +1,4 @@
-import { POLICY } from "@/lib/config";
+import { getCatalog } from "@/lib/server/catalog";
 import { json, originOf } from "@/lib/server/http";
 import { preparePayment } from "@/lib/server/payphone";
 import { priceCart } from "@/lib/server/pricing";
@@ -26,7 +26,10 @@ export async function POST(req: Request) {
   if (payMethod === "online" && !email) return json({ error: "Necesitamos tu correo para enviarte el comprobante." }, 400);
   if (delivery === "domicilio" && (!address || address.length < 8)) return json({ error: "Escribe tu dirección completa." }, 400);
 
-  const priced = priceCart(b.items, delivery);
+  const cat = await getCatalog();
+  const POLICY = cat.policy;
+  const promoCode = typeof b.promoCode === "string" ? b.promoCode.trim().slice(0, 20) : undefined;
+  const priced = priceCart(cat, b.items, delivery, promoCode);
   if ("error" in priced) return json({ error: priced.error }, 400);
 
   const ip = clientIp(req);
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
       if (isBlocked(db, phone))
         return { status: 403, error: "Este celular no puede pagar en el local por pedidos anteriores sin retirar. Paga en línea para continuar." };
       if (!checkPhoneToken(b.token, phone)) return { status: 401, error: "Verifica tu celular con el código de WhatsApp." };
-      if (priced.totalCents > POLICY.localMaxTotal * 100)
+      if (priced.quote.totalCents > POLICY.localMaxTotal * 100)
         return { status: 400, error: `El pago en el local está limitado a pedidos de hasta $${POLICY.localMaxTotal}. Paga en línea.` };
       const pending = Object.values(db.orders).find(
         (o) => o.payMethod === "local" && !o.paid && o.customer.phone === phone && ACTIVE_LOCAL.includes(o.status)
@@ -65,8 +68,10 @@ export async function POST(req: Request) {
       address: delivery === "domicilio" ? address : undefined,
       customer: { name, phone, email },
       items: priced.items,
-      deliveryFeeCents: priced.deliveryFeeCents,
-      totalCents: priced.totalCents,
+      deliveryFeeCents: priced.quote.deliveryFeeCents,
+      discountCents: priced.quote.discountCents,
+      promo: priced.quote.promo ?? undefined,
+      totalCents: priced.quote.totalCents,
       timeline: [],
     };
     setStatus(order, payMethod === "local" ? "verificado" : "pendiente_pago", payMethod === "local" ? "Celular verificado" : "Esperando pago");
