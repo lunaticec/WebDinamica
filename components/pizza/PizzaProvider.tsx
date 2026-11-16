@@ -128,7 +128,9 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
   const addIngredient = useCallback(
     (id: IngredientId) => {
       if (!ingOf(cat, id)?.available) return;
-      setLayers((prev) => (prev.filter((l) => l.ing === id).length >= maxPer ? prev : [...prev, createLayer(cat, id)]));
+      setLayers((prev) =>
+        prev.filter((l) => l.ing === id).length >= maxPer ? prev : [...prev, createLayer(cat, id, prev.flatMap((l) => l.pieces))]
+      );
       setPresetName(null);
     },
     [cat, maxPer]
@@ -154,7 +156,7 @@ export function PizzaProvider({ children }: { children: ReactNode }) {
       const next: Layer[] = [];
       for (const [ing, qty] of Object.entries(preset.ingredients)) {
         if (!ingOf(cat, ing)?.available) continue;
-        for (let i = 0; i < Math.min(qty ?? 0, maxPer); i++) next.push(createLayer(cat, ing));
+        for (let i = 0; i < Math.min(qty ?? 0, maxPer); i++) next.push(createLayer(cat, ing, next.flatMap((l) => l.pieces)));
       }
       setLayers(next);
       setPresetName(preset.name);

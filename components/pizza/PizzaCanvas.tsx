@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { crustOf, sizeOf } from "@/lib/pizza";
 import { useCatalog } from "@/components/providers/CatalogProvider";
+import { PizzaBase } from "./PizzaBase";
 import { Topping } from "./Topping";
 import { usePizza } from "./PizzaProvider";
 
@@ -13,6 +14,8 @@ export function PizzaCanvas() {
   const scale = sizeOf(cat, size).scale;
   const crustDef = crustOf(cat, crust);
   const crustW = crustDef.width;
+  // Los ingredientes se reparten por TODA la salsa: con masa delgada se abren más, con masa gruesa se recogen.
+  const k = Math.max(24, 50 - crustW - 8) / 31;
 
   return (
     <div>
@@ -46,45 +49,7 @@ export function PizzaCanvas() {
           >
             <div className="absolute inset-[2%] translate-y-2 rounded-full bg-black/30 blur-lg" />
 
-            {/* Masa */}
-            <div
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: "radial-gradient(circle at 35% 28%, #f6e4bf, #e3c288 58%, #c9995a)",
-                boxShadow: "inset 0 -6px 14px rgba(120,70,20,.3), inset 0 6px 12px rgba(255,255,255,.35)",
-              }}
-            />
-            <div
-              aria-hidden
-              className="absolute inset-[2.4%] rounded-full border-[3px] border-dashed border-white/70 transition-opacity duration-500"
-              style={{ opacity: crustDef.stuffed ? 1 : 0 }}
-            />
-            {/* Salsa */}
-            <div
-              className="absolute rounded-full transition-all duration-500"
-              style={{
-                inset: `${crustW}%`,
-                background: "radial-gradient(circle, #d9432a 0%, #b9301b 100%)",
-                boxShadow: "inset 0 0 16px rgba(80,10,0,.45)",
-              }}
-            />
-            {/* Mozzarella base (manchas cremosas) */}
-            <div
-              className="absolute rounded-full transition-all duration-500"
-              style={{
-                inset: `${crustW + 1.5}%`,
-                background: [
-                  "radial-gradient(circle at 22% 30%, #fff6e2 0 9%, transparent 10%)",
-                  "radial-gradient(circle at 60% 18%, #fff6e2 0 8%, transparent 9%)",
-                  "radial-gradient(circle at 80% 46%, #fff6e2 0 10%, transparent 11%)",
-                  "radial-gradient(circle at 38% 62%, #fff6e2 0 11%, transparent 12%)",
-                  "radial-gradient(circle at 66% 78%, #fff6e2 0 9%, transparent 10%)",
-                  "radial-gradient(circle at 18% 78%, #fff6e2 0 7%, transparent 8%)",
-                  "radial-gradient(circle at 50% 44%, #fff6e2 0 8%, transparent 9%)",
-                ].join(","),
-                filter: "drop-shadow(0 1px 1px rgba(80,20,0,.3))",
-              }}
-            />
+            <PizzaBase crustWidth={crustW} stuffed={crustDef.stuffed} />
 
             {/* Zona de soltado */}
             <motion.div
@@ -102,8 +67,8 @@ export function PizzaCanvas() {
                       key={p.id}
                       className="absolute"
                       style={{
-                        left: `${p.x}%`,
-                        top: `${p.y}%`,
+                        left: `${50 + (p.x - 50) * k}%`,
+                        top: `${50 + (p.y - 50) * k}%`,
                         width: `${p.size}%`,
                         aspectRatio: "1",
                         transform: "translate(-50%, -50%)",
@@ -114,9 +79,10 @@ export function PizzaCanvas() {
                         animate={{ y: 0, opacity: 1, scale: p.scale, rotate: p.rot }}
                         exit={{ opacity: 0, scale: 0.2, y: -40 }}
                         transition={{ type: "spring", stiffness: 240, damping: 17, delay: p.delay }}
-                        className="h-full w-full drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)]"
+                        className="h-full w-full"
+                        style={{ filter: `brightness(${(0.9 + p.tone * 0.2).toFixed(2)}) saturate(${(0.88 + p.tone * 0.24).toFixed(2)}) drop-shadow(0 1.5px 1.2px rgba(40,10,0,0.5))` }}
                       >
-                        <Topping shape={p.shape} className="h-full w-full" />
+                        <Topping shape={p.shape} className="h-full w-full" flip={p.flip} />
                       </motion.div>
                     </div>
                   ))

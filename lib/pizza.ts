@@ -136,31 +136,66 @@ export function calcPrice(cat: Catalog, counts: Counts, sizeId: SizeId, crustId:
 
 /* ---------- Capas de ingredientes sobre la pizza ---------- */
 
-export type Piece = { id: string; ing: IngredientId; shape: ShapeId; x: number; y: number; rot: number; scale: number; size: number; delay: number };
+export type Piece = { id: string; ing: IngredientId; shape: ShapeId; x: number; y: number; rot: number; scale: number; size: number; delay: number; tone: number; flip: boolean };
 export type Layer = { uid: string; ing: IngredientId; pieces: Piece[] };
 
 let seq = 0;
 const uid = () => `${Date.now().toString(36)}-${seq++}`;
 
-/** Genera una porción de un ingrediente con piezas repartidas al azar sobre el disco de la pizza. */
-export function createLayer(cat: Catalog, ing: IngredientId): Layer {
+/** Radio (en % del ancho de la pizza) dentro del que caen los centros de las piezas: queda sobre la salsa incluso con borde grueso. */
+const SPREAD_R = 31;
+
+/**
+ * Elige la posición más "despejada" entre muchas candidatas (muestreo de mejor candidato):
+ * así los ingredientes se reparten parejo, sin amontonarse ni dejar huecos. Las piezas del mismo
+ * ingrediente se separan un poco más entre sí que de las demás.
+ */
+function bestSpot(existing: Piece[], size: number, ing: string) {
+  let best = { x: 50, y: 50, score: -Infinity };
+  for (let k = 0; k < 60; k++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = Math.sqrt(Math.random()) * SPREAD_R;
+    const x = 50 + Math.cos(a) * r;
+    const y = 50 + Math.sin(a) * r;
+    let score = Infinity;
+    for (const p of existing) {
+      const d = Math.hypot(p.x - x, p.y - y);
+      const need = ((p.size * p.scale + size) / 2) * (p.ing === ing ? 1.1 : 0.78);
+      score = Math.min(score, d / need);
+    }
+    if (score > best.score) best = { x, y, score };
+  }
+  return best;
+}
+
+/**
+ * Genera una porción de un ingrediente. `existing` son las piezas ya colocadas en la pizza
+ * (de cualquier ingrediente) para repartir las nuevas en los huecos libres.
+ */
+export function createLayer(cat: Catalog, ing: IngredientId, existing: Piece[] = []): Layer {
   const def = ingOf(cat, ing);
   if (!def) return { uid: uid(), ing, pieces: [] };
-  const pieces: Piece[] = Array.from({ length: def.pieces }, (_, i) => {
-    const angle = Math.random() * Math.PI * 2;
-    const r = 33 * Math.sqrt(Math.random());
-    return {
+  const placed = [...existing];
+  const pieces: Piece[] = [];
+  for (let i = 0; i < def.pieces; i++) {
+    const scale = 0.9 + Math.random() * 0.2;
+    const spot = bestSpot(placed, def.size * scale, ing);
+    const piece: Piece = {
       id: uid(),
       ing,
       shape: def.shape,
-      x: 50 + Math.cos(angle) * r,
-      y: 50 + Math.sin(angle) * r,
+      x: spot.x,
+      y: spot.y,
       rot: Math.random() * 360,
-      scale: 0.85 + Math.random() * 0.3,
+      scale,
       size: def.size,
-      delay: i * 0.035,
+      delay: Math.random() * 0.28,
+      tone: Math.random(),
+      flip: Math.random() > 0.5,
     };
-  });
+    placed.push(piece);
+    pieces.push(piece);
+  }
   return { uid: uid(), ing, pieces };
 }
 
