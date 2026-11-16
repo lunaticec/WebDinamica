@@ -39,7 +39,7 @@ function Row({ label, amount, muted, good, onRemove }: { label: string; amount: 
 export function Ticket() {
   const {
     size, crust, counts, layers, cart, removeFromCart, addToCart, clearPizza,
-    delivery, setDelivery, deliveryFee, orderTotal, presetName, quote, promoCode, setPromoCode,
+    delivery, setDelivery, deliveryFee, orderTotal, presetName, fixedBase, quote, promoCode, setPromoCode,
   } = usePizza();
   const cat = useCatalog();
 
@@ -114,7 +114,7 @@ export function Ticket() {
             </p>
             <ul>
               <AnimatePresence initial={false}>
-                <Row key="size" label={`Pizza ${s.label} ${s.inches}″`} amount={formatPrice(s.base)} />
+                <Row key="size" label={fixedBase !== null && presetName ? `${presetName} · ${s.label} ${s.inches}″` : `Pizza ${s.label} ${s.inches}″`} amount={formatPrice(fixedBase ?? s.base)} />
                 {c.extra > 0 && <Row key="crust" label={`Masa ${c.label.toLowerCase()}`} amount={formatPrice(c.extra)} />}
                 {tops.map((i) => {
                   const q = counts[i.id] ?? 0;
@@ -122,7 +122,8 @@ export function Ticket() {
                     <Row
                       key={i.id}
                       label={`${i.name}${q > 1 ? ` ×${q}` : ""}`}
-                      amount={formatPrice(i.price * q * s.mult)}
+                      amount={fixedBase !== null ? "incluido" : formatPrice(i.price * q * s.mult)}
+                      muted={fixedBase !== null}
                     />
                   );
                 })}

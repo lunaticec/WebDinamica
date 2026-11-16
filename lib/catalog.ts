@@ -37,10 +37,10 @@ export const DEFAULT_CATALOG: Catalog = {
     { id: "albahaca", name: "Albahaca", price: 0.5, shape: "albahaca", pieces: 6, size: 12, available: true },
   ],
   presets: [
-    { id: "pepperoni", name: "Pepperoni Clásica", desc: "La favorita de siempre: doble pepperoni y aceitunas.", active: true, ingredients: { pepperoni: 2, aceituna: 1 } },
-    { id: "hawaiana", name: "Hawaiana", desc: "Jamón y piña, dulce y salada.", active: true, ingredients: { jamon: 2, pina: 2 } },
-    { id: "vegetariana", name: "Huerta", desc: "Champiñón, pimiento, cebolla, tomate y albahaca.", active: true, ingredients: { champinon: 1, pimiento: 1, cebolla: 1, tomate: 1, albahaca: 1 } },
-    { id: "carnivora", name: "Carnívora", desc: "Pepperoni, jamón y tocino sin piedad.", active: true, ingredients: { pepperoni: 1, jamon: 1, tocino: 2 } },
+    { id: "pepperoni", name: "Pepperoni Clásica", desc: "La favorita de siempre: doble pepperoni y aceitunas.", active: true, ingredients: { pepperoni: 2, aceituna: 1 }, prices: {} },
+    { id: "hawaiana", name: "Hawaiana", desc: "Jamón y piña, dulce y salada.", active: true, ingredients: { jamon: 2, pina: 2 }, prices: {} },
+    { id: "vegetariana", name: "Huerta", desc: "Champiñón, pimiento, cebolla, tomate y albahaca.", active: true, ingredients: { champinon: 1, pimiento: 1, cebolla: 1, tomate: 1, albahaca: 1 }, prices: {} },
+    { id: "carnivora", name: "Carnívora", desc: "Pepperoni, jamón y tocino sin piedad.", active: true, ingredients: { pepperoni: 1, jamon: 1, tocino: 2 }, prices: {} },
   ],
   promotions: [
     { id: "martes-2x1", name: "Martes 2x1", description: "En pizzas medianas, la segunda es gratis.", active: false, type: "two_for_one", value: 0, code: "", minSubtotal: 0, sizes: ["mediana"], startsAt: "", endsAt: "", days: [2] },
@@ -151,7 +151,12 @@ export function sanitizeCatalog(raw: unknown, prevVersion = 0): { catalog: Catal
       const n = Math.round(num(q, 0, policy.maxPerIngredient, 0));
       if (ingIds.has(id) && n > 0) ing[id] = n;
     }
-    return { id: str(o.id, 40), name: str(o.name, 40), desc: str(o.desc, 120), active: o.active !== false, ingredients: ing };
+    const prices: Record<string, number> = {};
+    for (const [sid, v] of Object.entries(rec(o.prices))) {
+      const n = money(v, 500, 0);
+      if (sizes.some((sz) => sz.id === sid) && n > 0) prices[sid] = n;
+    }
+    return { id: str(o.id, 40), name: str(o.name, 40), desc: str(o.desc, 120), active: o.active !== false, ingredients: ing, prices };
   });
   if (presets.some((x) => !x.name)) return { error: "Todas las pizzas del menú necesitan un nombre." };
   presets = uniqueIds(presets, "p");

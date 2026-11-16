@@ -83,7 +83,7 @@ export function CheckoutModal({ open, onClose }: { open: boolean; onClose: () =>
 
   const payload = (token?: string) => ({
     customer: { name, phone, email },
-    items: orderItems.map((i) => ({ name: i.name, size: i.size, crust: i.crust, ingredients: i.ingredients })),
+    items: orderItems.map((i) => ({ name: i.name, presetId: i.presetId, size: i.size, crust: i.crust, ingredients: i.ingredients })),
     delivery,
     address,
     payMethod: method,

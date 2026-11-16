@@ -17,11 +17,11 @@ Entra a `/admin` (contraseña `ADMIN_PASSWORD`) → pestaña **Menú, precios y 
 | --- | --- |
 | **Tamaños y masas** | Nombre, pulgadas, precio base y multiplicador de ingredientes por tamaño; masas con extra y borde relleno. Reordenar, agregar y eliminar. |
 | **Ingredientes** | Precio, forma con la que se dibuja (15 formas), piezas, y **Disponible / Agotado** con un interruptor. |
-| **Menú** | Pizzas prearmadas: nombre, descripción, ingredientes por porciones, visible u oculta. El precio se calcula solo. |
+| **Menú** | Pizzas prearmadas: nombre, descripción, ingredientes por porciones, visible u oculta. **Precio fijo por tamaño** (o vacío = automático según ingredientes). |
 | **Promociones** | Porcentaje, monto fijo, **2x1** o **envío gratis**; automáticas o con **código**; compra mínima, tamaños, días de la semana y rango de fechas. Se aplica solo la que más descuenta. |
 | **Negocio y reglas** | Nombre, horario, dirección, teléfono, costo de envío, IVA, zona horaria, tope y reserva del pago en local, plantones permitidos. |
 
-Notas: los precios y promociones los **recalcula el servidor** en cada pedido; el comprobante guarda los nombres del momento del pedido (si luego renombras algo, los comprobantes viejos no cambian); eliminar un ingrediente lo quita también de las pizzas del menú. Los valores iniciales están en `lib/catalog.ts` (`DEFAULT_CATALOG`).
+Notas: con precio fijo, el cliente paga ese precio mientras no agregue ni quite ingredientes (si la personaliza se cobra por ingredientes) y la masa especial suma su extra; los precios y promociones los **recalcula el servidor** en cada pedido; el comprobante guarda los nombres del momento del pedido (si luego renombras algo, los comprobantes viejos no cambian); eliminar un ingrediente lo quita también de las pizzas del menú. Los valores iniciales están en `lib/catalog.ts` (`DEFAULT_CATALOG`).
 
 ## Cómo funciona
 

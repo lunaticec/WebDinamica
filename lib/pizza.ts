@@ -62,7 +62,15 @@ export type Ingredient = {
 
 export type Size = { id: SizeId; label: string; inches: number; base: number; mult: number; scale: number };
 export type Crust = { id: CrustId; label: string; desc: string; extra: number; width: number; stuffed: boolean };
-export type Preset = { id: string; name: string; desc: string; active: boolean; ingredients: Counts };
+export type Preset = {
+  id: string;
+  name: string;
+  desc: string;
+  active: boolean;
+  ingredients: Counts;
+  /** Precio fijo por tamaño (id de tamaño → dólares). Si falta un tamaño, se calcula con los ingredientes. */
+  prices: Record<SizeId, number>;
+};
 
 export type PromoType = "percent" | "amount" | "free_delivery" | "two_for_one";
 export type Promotion = {
@@ -132,6 +140,28 @@ export function calcPrice(cat: Catalog, counts: Counts, sizeId: SizeId, crustId:
   const crust = crustOf(cat, crustId);
   const toppings = Object.entries(counts).reduce((sum, [id, qty]) => sum + (ingOf(cat, id)?.price ?? 0) * (qty ?? 0), 0);
   return size.base + crust.extra + toppings * size.mult;
+}
+
+/** Precio fijo que el dueño puso a una pizza del menú para este tamaño, o null si es automático. */
+export function fixedPrice(preset: Preset | undefined, sizeId: SizeId): number | null {
+  const v = preset?.prices?.[sizeId];
+  return typeof v === "number" && v > 0 ? v : null;
+}
+
+/** La pizza del menú cuyos ingredientes coinciden EXACTAMENTE: si el cliente la modifica, deja de ser la del menú. */
+export function matchPreset(cat: Catalog, presetId: string | undefined | null, counts: Counts): Preset | undefined {
+  if (!presetId) return undefined;
+  const p = cat.presets.find((x) => x.id === presetId && x.active);
+  if (!p) return undefined;
+  const want = Object.entries(p.ingredients).filter(([, q]) => q > 0);
+  const have = Object.entries(counts).filter(([, q]) => q > 0);
+  return want.length === have.length && want.every(([id, q]) => counts[id] === q) ? p : undefined;
+}
+
+/** Precio de una pizza: el fijo del menú (más el extra de la masa) o, si no hay, el calculado por ingredientes. */
+export function itemPrice(cat: Catalog, counts: Counts, sizeId: SizeId, crustId: CrustId, preset?: Preset) {
+  const fixed = fixedPrice(preset, sizeOf(cat, sizeId).id);
+  return fixed !== null ? fixed + crustOf(cat, crustId).extra : calcPrice(cat, counts, sizeId, crustId);
 }
 
 /* ---------- Capas de ingredientes sobre la pizza ---------- */
@@ -208,6 +238,8 @@ export type CartItem = {
   crust: CrustId;
   ingredients: Counts;
   price: number;
+  /** Pizza del menú de la que viene (sólo si no se modificaron sus ingredientes) */
+  presetId?: string;
   /** Copia de los nombres al momento del pedido: el comprobante no cambia si luego editas el menú. */
   snap?: { size: string; crust: string; tops: string };
 };

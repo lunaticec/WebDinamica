@@ -1,7 +1,7 @@
 "use client";
 
 import { Wand2 } from "lucide-react";
-import { calcPrice, ingOf, midSize } from "@/lib/pizza";
+import { ingOf, itemPrice, midSize } from "@/lib/pizza";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { formatPrice } from "@/lib/utils";
 import { GlowCard } from "@/components/ui/GlowCard";
@@ -42,7 +42,7 @@ export function Menu() {
                 <div className="flex items-start justify-between gap-4">
                   <h3 className="font-display text-3xl font-semibold text-white">{p.name}</h3>
                   <span className="shrink-0 font-display text-2xl text-orange-300">
-                    {formatPrice(calcPrice(cat, p.ingredients, ref.id, cat.crusts[0].id))}
+                    {formatPrice(itemPrice(cat, p.ingredients, ref.id, cat.crusts[0].id, p))}
                   </span>
                 </div>
                 <p className="mt-2 text-[15px] text-white/55">{p.desc}</p>

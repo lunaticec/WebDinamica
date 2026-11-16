@@ -1,6 +1,6 @@
 import "server-only";
 import { quote } from "@/lib/promo";
-import { calcPrice, crustOf, ingOf, sizeOf, type Catalog, type CartItem, type Counts, type Delivery } from "@/lib/pizza";
+import { crustOf, ingOf, itemPrice, matchPreset, sizeOf, type Catalog, type CartItem, type Counts, type Delivery } from "@/lib/pizza";
 
 /**
  * Recalcula TODO en el servidor con el catálogo vigente: el cliente sólo envía qué pizza quiere
@@ -12,7 +12,7 @@ export function priceCart(cat: Catalog, raw: unknown, delivery: Delivery, code?:
   const items: CartItem[] = [];
   for (const r of raw) {
     if (!r || typeof r !== "object") return { error: "Pedido inválido" } as const;
-    const { name, size, crust, ingredients } = r as Record<string, unknown>;
+    const { name, size, crust, ingredients, presetId } = r as Record<string, unknown>;
     if (typeof size !== "string" || typeof crust !== "string") return { error: "Pedido inválido" } as const;
     if (!cat.sizes.some((s) => s.id === size) || !cat.crusts.some((c) => c.id === crust))
       return { error: "El menú cambió. Recarga la página para ver los tamaños y masas actuales." } as const;
@@ -29,7 +29,9 @@ export function priceCart(cat: Catalog, raw: unknown, delivery: Delivery, code?:
       }
     }
 
-    const price = Math.round(calcPrice(cat, counts, size, crust) * 100) / 100;
+    // Si coincide exactamente con una pizza del menú, aplica su precio fijo (si lo tiene).
+    const preset = matchPreset(cat, typeof presetId === "string" ? presetId : undefined, counts);
+    const price = Math.round(itemPrice(cat, counts, size, crust, preset) * 100) / 100;
     const sz = sizeOf(cat, size);
     const cr = crustOf(cat, crust);
     const tops = Object.entries(counts)
@@ -37,7 +39,8 @@ export function priceCart(cat: Catalog, raw: unknown, delivery: Delivery, code?:
       .join(", ");
     items.push({
       uid: String(items.length),
-      name: typeof name === "string" ? name.trim().slice(0, 40) || "Pizza personalizada" : "Pizza personalizada",
+      name: preset?.name ?? (typeof name === "string" && name.trim() ? name.trim().slice(0, 40) : "Pizza personalizada"),
+      presetId: preset?.id,
       size,
       crust,
       ingredients: counts,

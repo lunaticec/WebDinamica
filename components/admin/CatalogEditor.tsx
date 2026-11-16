@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { Topping } from "@/components/pizza/Topping";
 import { describePromo, localDay } from "@/lib/promo";
-import { SHAPES, SHAPE_BY_ID, type Catalog, type Crust, type Ingredient, type Preset, type Promotion, type PromoType, type ShapeId, type Size } from "@/lib/pizza";
+import { SHAPES, SHAPE_BY_ID, calcPrice, fixedPrice, type Catalog, type Crust, type Ingredient, type Preset, type Promotion, type PromoType, type ShapeId, type Size } from "@/lib/pizza";
 import { cn, formatPrice } from "@/lib/utils";
 
 /* ---------------------------- utilidades ---------------------------- */
@@ -331,16 +331,15 @@ function Ingredients({ draft, set }: SecProps) {
 
 function Menu({ draft, set }: SecProps) {
   const mid = draft.sizes[Math.floor((draft.sizes.length - 1) / 2)];
-  const priceOf = (p: Preset) => {
-    const tops = Object.entries(p.ingredients).reduce((sum, [id, q]) => sum + (draft.ingredients.find((x) => x.id === id)?.price ?? 0) * q, 0);
-    return mid.base + tops * mid.mult;
-  };
+  const crust0 = draft.crusts[0];
+  const autoOf = (p: Preset, sizeId: string) => calcPrice(draft, p.ingredients, sizeId, crust0.id);
+  const priceOf = (p: Preset) => fixedPrice(p, mid.id) !== null ? fixedPrice(p, mid.id)! + crust0.extra : autoOf(p, mid.id);
   return (
     <section>
       <SectionTitle
         title="Menú de pizzas"
-        desc="Pizzas listas que el cliente puede elegir y luego personalizar. El precio se calcula solo con los ingredientes y el tamaño del medio."
-        action={<AddButton onClick={() => set({ presets: [...draft.presets, { id: rid("p"), name: "Nueva pizza", desc: "", active: true, ingredients: {} } as Preset] })}>Agregar pizza</AddButton>}
+        desc="Pizzas listas que el cliente puede elegir y luego personalizar. Puedes ponerles un precio fijo por tamaño; si lo dejas vacío, el precio se calcula con los ingredientes."
+        action={<AddButton onClick={() => set({ presets: [...draft.presets, { id: rid("p"), name: "Nueva pizza", desc: "", active: true, ingredients: {}, prices: {} } as Preset] })}>Agregar pizza</AddButton>}
       />
       <div className="space-y-3">
         {draft.presets.map((p, i) => (
@@ -352,9 +351,44 @@ function Menu({ draft, set }: SecProps) {
               <RowTools i={i} n={draft.presets.length} onMove={(d) => set({ presets: move(draft.presets, i, d) })} onDelete={() => set({ presets: removeAt(draft.presets, i) })} />
             </div>
             <div>
-              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-white/45">
-                Ingredientes · precio {mid.label.toLowerCase()}: <span className="text-orange-300">{formatPrice(priceOf(p))}</span>
-              </p>
+              <div className="mb-4 rounded-xl border border-orange-400/25 bg-orange-500/[0.06] p-3">
+                <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-orange-200/80">
+                  Precio de esta pizza · {mid.label.toLowerCase()}: <span className="text-orange-300">{formatPrice(priceOf(p))}</span>
+                  {fixedPrice(p, mid.id) !== null ? " (fijo)" : " (automático)"}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {draft.sizes.map((sz) => {
+                    const v = p.prices?.[sz.id];
+                    return (
+                      <label key={sz.id} className="block w-36">
+                        <span className="mb-1 block text-[11px] text-white/50">{sz.label} {sz.inches}″</span>
+                        <div className="relative">
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-white/40">$</span>
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step={0.25}
+                            min={0}
+                            className={cn(inputCls, "pl-7")}
+                            placeholder={`${autoOf(p, sz.id).toFixed(2)} auto`}
+                            value={v ?? ""}
+                            onChange={(e) => {
+                              const next = { ...(p.prices ?? {}) };
+                              if (e.target.value === "" || Number(e.target.value) <= 0) delete next[sz.id];
+                              else next[sz.id] = Number(e.target.value);
+                              set({ presets: patchAt(draft.presets, i, { prices: next }) });
+                            }}
+                          />
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] leading-snug text-white/40">
+                  Vacío = se calcula con los ingredientes. Con precio fijo, el cliente paga ese precio mientras no agregue ni quite ingredientes; si la personaliza, se cobra por ingredientes. Una masa especial suma su extra.
+                </p>
+              </div>
+              <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-white/45">Ingredientes de la pizza</p>
               <div className="flex flex-wrap gap-2">
                 {draft.ingredients.map((g) => {
                   const q = p.ingredients[g.id] ?? 0;
